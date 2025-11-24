@@ -161,7 +161,8 @@
       <div class="stat-card"><h3 id="totalRec">0</h3><p>接待总数</p></div>
       <div class="stat-card"><h3 id="convRate">0%</h3><p>询盘转化率</p></div>
       <div class="stat-card"><h3 id="adRate">0%</h3><p>广告流量占比</p></div>
-      <div class="stat-card"><h3 id="momConv">0%</h3><p>环比询盘百分比</p></div>
+      <div class="stat-card"><h3 id="momInq">0%</h3><p>询盘增长环比</p></div>
+      <div class="stat-card"><h3 id="clickRate">0%</h3><p>点击转化率</p></div>
     </div>
 
     <div class="charts-grid" id="charts" style="display:none;">
@@ -171,8 +172,7 @@
       <div class="chart-card"><h3>询盘转化漏斗</h3><canvas id="funnelChart" height="300"></canvas></div>
       <div class="chart-card"><h3>月度询盘总量</h3><canvas id="monthlyChart" height="300"></canvas></div>
       <div class="chart-card"><h3>每日询盘增长热力图</h3><canvas id="heatmapChart" height="300"></canvas></div>
-      <div class="chart-card"><h3>访客 vs 询盘散点图</h3><canvas id="scatterChart" height="300"></canvas></div>
-      <div class="chart-card"><h3>指标雷达图</h3><canvas id="radarChart" height="300"></canvas></div>
+      <div class="chart-card"><h3>自然流量增长趋势（含预测）</h3><canvas id="naturalFlowChart" height="300"></canvas></div>
     </div>
   </div>
 
@@ -276,10 +276,29 @@
       return Math.ceil(diff / oneWeek);
     }
 
+    // 简单线性预测函数（预测未来7天自然流量）
+    function predictFuture(data, key, days = 7) {
+      if (data.length < 2) return Array(days).fill(0);
+      const x = data.map((_, i) => i);
+      const y = data.map(d => d[key]);
+      const n = x.length;
+      const sumX = x.reduce((a, b) => a + b, 0);
+      const sumY = y.reduce((a, b) => a + b, 0);
+      const sumXY = x.reduce((a, b, i) => a + b * y[i], 0);
+      const sumX2 = x.reduce((a, b) => a + b * b, 0);
+      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      const intercept = (sumY - slope * sumX) / n;
+      const predictions = [];
+      for (let i = n; i < n + days; i++) {
+        predictions.push(Math.max(0, Math.round(slope * i + intercept)));
+      }
+      return predictions;
+    }
+
     // 渲染全部
     function renderAll() {
       // 销毁现有图表
-      const chartIds = ['trendChart', 'pieChart', 'weeklyChart', 'funnelChart', 'monthlyChart', 'heatmapChart', 'scatterChart', 'radarChart'];
+      const chartIds = ['trendChart', 'pieChart', 'weeklyChart', 'funnelChart', 'monthlyChart', 'heatmapChart', 'naturalFlowChart'];
       chartIds.forEach(id => {
         const chart = Chart.getChart(id);
         if (chart) chart.destroy();
@@ -302,6 +321,9 @@
       // 计算当前转化率
       const convRate = total.visitors > 0 ? (total.inquiries / total.visitors * 100) : 0;
 
+      // 计算点击转化率
+      const clickRate = total.totalExp > 0 ? (total.visitors / total.totalExp * 100) : 0;
+
       // 计算上个月
       const currentDate = new Date(currentMonth + '-01');
       let lastMonthYear = currentDate.getFullYear();
@@ -318,16 +340,16 @@
         visitors: acc.visitors + d.visitors,
         inquiries: acc.inquiries + d.inquiries
       }), { visitors: 0, inquiries: 0 });
-      const lastConvRate = lastTotal.visitors > 0 ? (lastTotal.inquiries / lastTotal.visitors * 100) : 0;
+      const lastInquiries = lastTotal.inquiries;
 
-      // 计算环比
-      let momConv = 'N/A';
-      if (lastConvRate > 0) {
-        momConv = ((convRate / lastConvRate - 1) * 100).toFixed(2) + '%';
-      } else if (convRate > 0) {
-        momConv = '∞%'; // 如果上月为0，本月有增长
-      } else if (lastConvRate === 0 && convRate === 0) {
-        momConv = '0%';
+      // 计算询盘增长环比
+      let momInq = 'N/A';
+      if (lastInquiries > 0) {
+        momInq = ((total.inquiries / lastInquiries - 1) * 100).toFixed(2) + '%';
+      } else if (total.inquiries > 0) {
+        momInq = '∞%'; // 如果上月为0，本月有增长
+      } else if (lastInquiries === 0 && total.inquiries === 0) {
+        momInq = '0%';
       }
 
       // 更新总览（添加接待）
@@ -337,7 +359,8 @@
       document.getElementById('totalRec').textContent = total.reception;
       document.getElementById('convRate').textContent = convRate.toFixed(2) + '%';
       document.getElementById('adRate').textContent = total.totalExp > 0 ? (total.adExp / total.totalExp * 100).toFixed(1) + '%' : '0%';
-      document.getElementById('momConv').textContent = momConv;
+      document.getElementById('momInq').textContent = momInq;
+      document.getElementById('clickRate').textContent = clickRate.toFixed(2) + '%';
       document.getElementById('lastUpdate').textContent = new Date().toLocaleString('zh-CN');
 
       document.getElementById('loading').style.display = 'none';
@@ -484,40 +507,18 @@
         }
       });
 
-      // 新添加7. 散点图（访客 vs 询盘）
-      new Chart(document.getElementById('scatterChart'), {
-        type: 'scatter',
+      // 7. 自然流量增长趋势（含预测）
+      const naturalData = displayData.map(d => d.naturalExp);
+      const predictions = predictFuture(displayData, 'naturalExp', 7);
+      const futureLabels = Array.from({length: 7}, (_, i) => `未来${i+1}天`);
+      new Chart(document.getElementById('naturalFlowChart'), {
+        type: 'line',
         data: {
-          datasets: [{
-            label: '访客 vs 询盘',
-            data: displayData.map(d => ({ x: d.visitors, y: d.inquiries })),
-            backgroundColor: '#00ffff'
-          }]
-        },
-        options: {
-          scales: {
-            x: { title: { display: true, text: '访客', color: '#00ffff' } },
-            y: { title: { display: true, text: '询盘', color: '#00ffff' } }
-          },
-          plugins: { 
-            legend: { labels: { color: '#00ffff' } },
-            datalabels: { display: false }
-          }
-        }
-      });
-
-      // 新添加8. 雷达图（指标比较）
-      new Chart(document.getElementById('radarChart'), {
-        type: 'radar',
-        data: {
-          labels: ['总展现', '访客', '询盘', '接待', '广告展现', '自然展现'],
-          datasets: [{
-            label: '当前月指标',
-            data: [total.totalExp / 1000, total.visitors, total.inquiries, total.reception, total.adExp / 1000, total.naturalExp / 1000], // 规模化展现
-            backgroundColor: 'rgba(255, 0, 255, 0.2)',
-            borderColor: '#ff00ff',
-            pointBackgroundColor: '#ff00ff'
-          }]
+          labels: [...labels, ...futureLabels],
+          datasets: [
+            { label: '自然流量', data: [...naturalData, ...Array(7).fill(null)], borderColor: '#00ffff', tension: 0.4 },
+            { label: '预测', data: [...Array(naturalData.length).fill(null), ...predictions], borderColor: '#ffff00', tension: 0.4, borderDash: [5, 5] }
+          ]
         },
         options: {
           plugins: { 
