@@ -7,6 +7,7 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;700&display=swap');
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -136,40 +137,6 @@
     .update { color: #ff00ff; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
     .loading { text-align: center; padding: 50px; color: #00ffff; font-size: 1.2rem; }
-
-    /* 模态窗口样式 */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 100;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.9);
-    }
-    .modal-content {
-      margin: auto;
-      display: block;
-      width: 80%;
-      max-width: 1200px;
-    }
-    .close {
-      position: absolute;
-      top: 15px;
-      right: 35px;
-      color: #f1f1f1;
-      font-size: 40px;
-      font-weight: bold;
-      transition: 0.3s;
-    }
-    .close:hover,
-    .close:focus {
-      color: #bbb;
-      text-decoration: none;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
@@ -210,23 +177,16 @@
     </div>
   </div>
 
-  <!-- 模态窗口 -->
-  <div id="myModal" class="modal">
-    <span class="close">&times;</span>
-    <canvas id="enlargedChart" class="modal-content"></canvas>
-  </div>
-
   <footer>
     数据最后更新：<span class="update" id="lastUpdate">加载中...</span><br>
     优化：下拉月份切换 + 首次默认最新数据 | 每周上传 data.xlsx 自动刷新
   </footer>
 
   <script>
-    Chart.register(ChartDataLabels);
+    Chart.register(ChartDataLabels, zoomPlugin);
 
     let allData = [];
     let currentMonth = ''; // 当前选中的月份 (YYYY-MM)
-    let trendChartInstance; // 保存趋势图实例
 
     // Excel 序列号转日期（修复版）
     function excelToDate(serial) {
@@ -411,7 +371,7 @@
       const labels = displayData.map(d => format(d.date, 'MM-dd'));
 
       // 1. 趋势图（不显示数值）
-      trendChartInstance = new Chart(document.getElementById('trendChart'), {
+      new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
           labels: labels,
@@ -427,27 +387,25 @@
             legend: { labels: { color: '#00ffff' } },
             datalabels: {
               display: false
+            },
+            zoom: {
+              zoom: {
+                wheel: {
+                  enabled: true,
+                },
+                pinch: {
+                  enabled: true
+                },
+                mode: 'xy',
+              },
+              pan: {
+                enabled: true,
+                mode: 'xy',
+              }
             }
           }
         }
       });
-
-      // 趋势图点击事件
-      document.getElementById('trendChart').onclick = function() {
-        const modal = document.getElementById('myModal');
-        const enlargedCanvas = document.getElementById('enlargedChart');
-        modal.style.display = "block";
-        const enlargedChart = new Chart(enlargedCanvas, {
-          type: trendChartInstance.config.type,
-          data: trendChartInstance.config.data,
-          options: { ...trendChartInstance.config.options, responsive: true, maintainAspectRatio: false }
-        });
-        // 关闭模态
-        document.querySelector('.close').onclick = function() {
-          modal.style.display = "none";
-          enlargedChart.destroy();
-        };
-      };
 
       // 2. 饼图（只显示百分比）
       new Chart(document.getElementById('pieChart'), {
