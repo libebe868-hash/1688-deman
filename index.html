@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>汉鸿店铺 · 数据战情室 Pro</title>
+  <title>姹夐缚搴楅摵 路 鏁版嵁鎴樻儏瀹?Pro</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -341,122 +341,122 @@
   <div class="stars"></div>
   <div class="glow-line"></div>
   <header>
-    <h1>汉鸿店铺 · 数据战情室 Pro</h1>
-    <p class="subtitle">阿里巴巴实时作战看板 · 月份切换 & 周趋势优化 & 数据下载</p>
+    <h1>姹夐缚搴楅摵 路 鏁版嵁鎴樻儏瀹?Pro</h1>
+    <p class="subtitle">闃块噷宸村反瀹炴椂浣滄垬鐪嬫澘 路 鏈堜唤鍒囨崲 & 鍛ㄨ秼鍔夸紭鍖?& 鏁版嵁涓嬭浇</p>
   </header>
   
   <div class="control-bar">
     <div class="month-selector" id="monthSelector"></div>
     <div class="download-buttons">
-      <button type="button" class="btn btn-secondary" onclick="downloadWeeklySummary()">📊 下载周汇总</button>
-      <button type="button" class="btn btn-secondary" onclick="downloadMonthlySummary()">📈 下载月汇总</button>
-      <button type="button" class="btn btn-secondary" onclick="downloadAnnualSummary()">📅 下载年度汇总</button>
-      <button type="button" class="btn btn-secondary" onclick="window.print()">🖨️ 打印看板</button>
-      <button type="button" class="btn btn-secondary" onclick="loadData()" title="重新读取 data.xlsx">🔄 刷新数据</button>
+      <button type="button" class="btn btn-secondary" onclick="downloadWeeklySummary()">馃搳 涓嬭浇鍛ㄦ眹鎬?/button>
+      <button type="button" class="btn btn-secondary" onclick="downloadMonthlySummary()">馃搱 涓嬭浇鏈堟眹鎬?/button>
+      <button type="button" class="btn btn-secondary" onclick="downloadAnnualSummary()">馃搮 涓嬭浇骞村害姹囨€?/button>
+      <button type="button" class="btn btn-secondary" onclick="window.print()">馃枿锔?鎵撳嵃鐪嬫澘</button>
+      <button type="button" class="btn btn-secondary" onclick="loadData()" title="閲嶆柊璇诲彇 data.xlsx">馃攧 鍒锋柊鏁版嵁</button>
     </div>
   </div>
-  <p class="hint-bar">提示：点击图表可放大；各图右上角可导出 PNG；大表自动 Worker 解析。详见 config.json。</p>
+  <p class="hint-bar">鎻愮ず锛氱偣鍑诲浘琛ㄥ彲鏀惧ぇ锛涘悇鍥惧彸涓婅鍙鍑?PNG锛涘ぇ琛ㄨ嚜鍔?Worker 瑙ｆ瀽銆傝瑙?config.json銆?/p>
   
   <div class="container">
-    <div id="loading" class="loading">加载数据中...（首次默认最新月份）</div>
+    <div id="loading" class="loading">鍔犺浇鏁版嵁涓?..锛堥娆￠粯璁ゆ渶鏂版湀浠斤級</div>
     <div id="dataWarnings" class="data-warnings" role="status"></div>
     <div class="stats" id="stats" style="display:none;">
-      <div class="stat-card"><h3 id="totalExp">0</h3><p>总展现量</p></div>
-      <div class="stat-card"><h3 id="totalVis">0</h3><p>总访客数</p></div>
-      <div class="stat-card"><h3 id="totalInq">0</h3><p>询盘总数</p></div>
-      <div class="stat-card"><h3 id="totalRec">0</h3><p>接待总数</p></div>
-      <div class="stat-card"><h3 id="convRate">0%</h3><p>询盘转化率</p></div>
-      <div class="stat-card"><h3 id="adRate">0%</h3><p>广告流量占比</p></div>
-      <div class="stat-card"><h3 id="momInq">0%</h3><p>询盘增长环比</p></div>
-      <div class="stat-card"><h3 id="clickRate">0%</h3><p>点击转化率</p></div>
-      <div class="stat-card"><h3 id="totalAdSpend">0</h3><p>总广告花费</p></div>
-      <div class="stat-card"><h3 id="totalLeads">0</h3><p>总线索</p></div>
-      <div class="stat-card"><h3 id="totalDeals">0</h3><p>总成交金额</p></div>
-      <div class="stat-card"><h3 id="roi">0%</h3><p>ROI (成交/花费)</p></div>
-      <div class="stat-card"><h3 id="costPerLead">0</h3><p>单线索成本</p></div>
-      <div class="stat-card"><h3 id="receptionRate">0%</h3><p>接待转化率</p></div>
+      <div class="stat-card"><h3 id="totalExp">0</h3><p>鎬诲睍鐜伴噺</p></div>
+      <div class="stat-card"><h3 id="totalVis">0</h3><p>鎬昏瀹㈡暟</p></div>
+      <div class="stat-card"><h3 id="totalInq">0</h3><p>璇㈢洏鎬绘暟</p></div>
+      <div class="stat-card"><h3 id="totalRec">0</h3><p>鎺ュ緟鎬绘暟</p></div>
+      <div class="stat-card"><h3 id="convRate">0%</h3><p>璇㈢洏杞寲鐜?/p></div>
+      <div class="stat-card"><h3 id="adRate">0%</h3><p>骞垮憡娴侀噺鍗犳瘮</p></div>
+      <div class="stat-card"><h3 id="momInq">0%</h3><p>璇㈢洏澧為暱鐜瘮</p></div>
+      <div class="stat-card"><h3 id="clickRate">0%</h3><p>鐐瑰嚮杞寲鐜?/p></div>
+      <div class="stat-card"><h3 id="totalAdSpend">0</h3><p>鎬诲箍鍛婅姳璐?/p></div>
+      <div class="stat-card"><h3 id="totalLeads">0</h3><p>鎬荤嚎绱?/p></div>
+      <div class="stat-card"><h3 id="totalDeals">0</h3><p>鎬绘垚浜ら噾棰?/p></div>
+      <div class="stat-card"><h3 id="roi">0%</h3><p>ROI (鎴愪氦/鑺辫垂)</p></div>
+      <div class="stat-card"><h3 id="costPerLead">0</h3><p>鍗曠嚎绱㈡垚鏈?/p></div>
+      <div class="stat-card"><h3 id="receptionRate">0%</h3><p>鎺ュ緟杞寲鐜?/p></div>
     </div>
     <div class="charts-grid" id="charts" style="display:none;">
       <div class="chart-card" data-chart="trendChart">
         <div class="chart-card-header">
-          <h3>全期趋势（展现/访客/询盘）</h3>
+          <h3>鍏ㄦ湡瓒嬪娍锛堝睍鐜?璁垮/璇㈢洏锛?/h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('trendChart')">PNG</button>
         </div>
         <canvas id="trendChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="pieChart">
         <div class="chart-card-header">
-          <h3>广告 vs 自然流量占比</h3>
+          <h3>骞垮憡 vs 鑷劧娴侀噺鍗犳瘮</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('pieChart')">PNG</button>
         </div>
         <canvas id="pieChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="weeklyChart">
         <div class="chart-card-header">
-          <h3>周询盘 & 周接待人数趋势</h3>
+          <h3>鍛ㄨ鐩?& 鍛ㄦ帴寰呬汉鏁拌秼鍔?/h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('weeklyChart')">PNG</button>
         </div>
         <canvas id="weeklyChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="funnelChart">
         <div class="chart-card-header">
-          <h3>询盘转化漏斗</h3>
+          <h3>璇㈢洏杞寲婕忔枟</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('funnelChart')">PNG</button>
         </div>
         <canvas id="funnelChart"></canvas>
       </div>
       <div class="chart-card" data-chart="monthlyChart">
         <div class="chart-card-header">
-          <h3>月度询盘总量</h3>
+          <h3>鏈堝害璇㈢洏鎬婚噺</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('monthlyChart')">PNG</button>
         </div>
         <canvas id="monthlyChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="heatmapChart">
         <div class="chart-card-header">
-          <h3>每日询盘增长热力图</h3>
+          <h3>姣忔棩璇㈢洏澧為暱鐑姏鍥?/h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('heatmapChart')">PNG</button>
         </div>
         <canvas id="heatmapChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="naturalFlowChart">
         <div class="chart-card-header">
-          <h3>自然流量增长趋势（含预测）</h3>
+          <h3>鑷劧娴侀噺澧為暱瓒嬪娍锛堝惈棰勬祴锛?/h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('naturalFlowChart')">PNG</button>
         </div>
         <canvas id="naturalFlowChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="adSpendChart">
         <div class="chart-card-header">
-          <h3>广告花费趋势</h3>
+          <h3>骞垮憡鑺辫垂瓒嬪娍</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('adSpendChart')">PNG</button>
         </div>
         <canvas id="adSpendChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="leadsChart">
         <div class="chart-card-header">
-          <h3>线索趋势</h3>
+          <h3>绾跨储瓒嬪娍</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('leadsChart')">PNG</button>
         </div>
         <canvas id="leadsChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="dealsChart">
         <div class="chart-card-header">
-          <h3>成交金额趋势</h3>
+          <h3>鎴愪氦閲戦瓒嬪娍</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('dealsChart')">PNG</button>
         </div>
         <canvas id="dealsChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="spendVsDealsChart">
         <div class="chart-card-header">
-          <h3>广告花费 vs 成交金额</h3>
+          <h3>骞垮憡鑺辫垂 vs 鎴愪氦閲戦</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('spendVsDealsChart')">PNG</button>
         </div>
         <canvas id="spendVsDealsChart" height="300"></canvas>
       </div>
       <div class="chart-card" data-chart="receptionTrendChart">
         <div class="chart-card-header">
-          <h3>接待趋势分析</h3>
+          <h3>鎺ュ緟瓒嬪娍鍒嗘瀽</h3>
           <button type="button" class="chart-png-btn" onclick="exportChartPng('receptionTrendChart')">PNG</button>
         </div>
         <canvas id="receptionTrendChart" height="300"></canvas>
@@ -464,16 +464,18 @@
     </div>
   </div>
   
-  <div id="myModal" class="modal" role="dialog" aria-modal="true" aria-label="图表放大预览">
-    <span class="close" role="button" tabindex="0" aria-label="关闭">&times;</span>
-    <img id="enlargedChartImg" class="modal-content" alt="放大后的图表" />
+  <div id="myModal" class="modal" role="dialog" aria-modal="true" aria-label="鍥捐〃鏀惧ぇ棰勮">
+    <span class="close" role="button" tabindex="0" aria-label="鍏抽棴">&times;</span>
+    <img id="enlargedChartImg" class="modal-content" alt="鏀惧ぇ鍚庣殑鍥捐〃" />
   </div>
   <footer>
-    数据最后更新：<span class="update" id="lastUpdate">加载中...</span><br>
-    config.json：dataJsonUrl 可写占位符 {month}，并设 refetchOnMonthChange 为 true 实现切换月份重新请求接口；否则走本地 xlsx 与表头自动识别
+    鏁版嵁鏈€鍚庢洿鏂帮細<span class="update" id="lastUpdate">鍔犺浇涓?..</span><br>
+    config.json锛歞ataJsonUrl 鍙啓鍗犱綅绗?{month}锛屽苟璁?refetchOnMonthChange 涓?true 瀹炵幇鍒囨崲鏈堜唤閲嶆柊璇锋眰鎺ュ彛锛涘惁鍒欒蛋鏈湴 xlsx 涓庤〃澶磋嚜鍔ㄨ瘑鍒?
   </footer>
   
   <script src="js/data-pipeline.js?v=5"></script>
   <script src="js/dashboard.js?v=10"></script>
 </body>
 </html>
+
+

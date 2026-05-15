@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   'use strict';
 
   var cfg = {};
@@ -48,7 +48,7 @@
     return date.toISOString().slice(0, 10);
   }
 
-  // 返回 ISO 8601 周键 "YYYY-Www"（周一为起始）
+  // 杩斿洖 ISO 8601 鍛ㄩ敭 "YYYY-Www"锛堝懆涓€涓鸿捣濮嬶級
   function getISOWeekKey(date) {
     var d = new Date(date.getTime());
     d.setHours(0, 0, 0, 0);
@@ -126,23 +126,23 @@
 
   function assertPdfLibs() {
     if (typeof html2canvas === 'undefined') {
-      alert('html2canvas 未加载，请检查网络后刷新页面。');
+      alert('html2canvas 鏈姞杞斤紝璇锋鏌ョ綉缁滃悗鍒锋柊椤甸潰銆?);
       return false;
     }
     if (typeof jspdf === 'undefined' || !jspdf.jsPDF) {
-      alert('jsPDF 未加载，请检查网络后刷新页面。');
+      alert('jsPDF 鏈姞杞斤紝璇锋鏌ョ綉缁滃悗鍒锋柊椤甸潰銆?);
       return false;
     }
     return true;
   }
 
-  // 智能分页：在A4边界附近扫描空白行，避免切断图表或表格行
+  // 鏅鸿兘鍒嗛〉锛氬湪A4杈圭晫闄勮繎鎵弿绌虹櫧琛岋紝閬垮厤鍒囨柇鍥捐〃鎴栬〃鏍艰
   async function pdfSmartMultipage(pdf, canvas, pdfW, pdfH) {
     var scale = canvas.width / pdfW;
     var pageHpx = Math.round(pdfH * scale);
     var totalHpx = canvas.height;
     var W = canvas.width;
-    // 一次性读取全部像素
+    // 涓€娆℃€ц鍙栧叏閮ㄥ儚绱?
     var fullData = canvas.getContext('2d').getImageData(0, 0, W, totalHpx).data;
     function rowWhite(y) {
       var nonWhite = 0;
@@ -151,7 +151,7 @@
         var i4 = base + xi * 4;
         if (fullData[i4] < 235 || fullData[i4+1] < 235 || fullData[i4+2] < 235) nonWhite++;
       }
-      return nonWhite / W < 0.05; // 少于5%非白像素视为空白行
+      return nonWhite / W < 0.05; // 灏戜簬5%闈炵櫧鍍忕礌瑙嗕负绌虹櫧琛?
     }
     var pageStart = 0;
     var pageNum = 0;
@@ -162,7 +162,7 @@
         pageEnd = totalHpx;
       } else {
         pageEnd = idealEnd;
-        // 向上最多扫描60mm找到空白行
+        // 鍚戜笂鏈€澶氭壂鎻?0mm鎵惧埌绌虹櫧琛?
         var scanLimit = Math.max(pageStart + Math.round(pageHpx * 0.55), idealEnd - Math.round(scale * 60));
         for (var sy = idealEnd; sy >= scanLimit; sy--) {
           if (rowWhite(sy)) { pageEnd = sy; break; }
@@ -181,7 +181,7 @@
     }
   }
 
-  // 通用多选对话框，返回 Promise<string[]|null>
+  // 閫氱敤澶氶€夊璇濇锛岃繑鍥?Promise<string[]|null>
   function showPickerDialog(title, items) {
     return new Promise(function(resolve) {
       var dlg = document.createElement('div');
@@ -197,7 +197,7 @@
       var allLbl = document.createElement('label');
       allLbl.style.cssText = 'cursor:pointer;font-size:13px;color:#555;display:flex;align-items:center;gap:6px;';
       var allChk = document.createElement('input'); allChk.type='checkbox'; allChk.checked=true;
-      allLbl.appendChild(allChk); allLbl.appendChild(document.createTextNode('全选 / 全不选'));
+      allLbl.appendChild(allChk); allLbl.appendChild(document.createTextNode('鍏ㄩ€?/ 鍏ㄤ笉閫?));
       allRow.appendChild(allLbl); box.appendChild(allRow);
       var grid = document.createElement('div');
       grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:18px;';
@@ -218,9 +218,9 @@
       });
       box.appendChild(grid);
       var btnRow = document.createElement('div'); btnRow.style.cssText='display:flex;gap:12px;';
-      var btnOk = document.createElement('button'); btnOk.textContent='✅ 确认下载';
+      var btnOk = document.createElement('button'); btnOk.textContent='鉁?纭涓嬭浇';
       btnOk.style.cssText='flex:1;padding:10px;background:#1a1a2e;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
-      var btnCancel = document.createElement('button'); btnCancel.textContent='取消';
+      var btnCancel = document.createElement('button'); btnCancel.textContent='鍙栨秷';
       btnCancel.style.cssText='flex:1;padding:10px;background:#eee;color:#333;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
       btnRow.appendChild(btnOk); btnRow.appendChild(btnCancel); box.appendChild(btnRow); dlg.appendChild(box); document.body.appendChild(dlg);
       btnOk.onclick = function() {
@@ -241,11 +241,11 @@
     }
     el.style.display = 'block';
     el.innerHTML =
-      '<strong>数据解析提示</strong>（' +
+      '<strong>鏁版嵁瑙ｆ瀽鎻愮ず</strong>锛? +
       lastParseWarnings.length +
-      ' 条）<br>' +
+      ' 鏉★級<br>' +
       lastParseWarnings.map(function (w) {
-        return '· ' + w;
+        return '路 ' + w;
       }).join('<br>');
   }
 
@@ -267,7 +267,7 @@
     var jsonUrl = resolveJsonUrlWithMonth(cfg.dataJsonUrl, month);
     var sep = jsonUrl.indexOf('?') >= 0 ? '&' : '?';
     var jr = await fetch(jsonUrl + sep + 't=' + Date.now(), { headers: { Accept: 'application/json' } });
-    if (!jr.ok) throw new Error('JSON 接口 ' + jr.status);
+    if (!jr.ok) throw new Error('JSON 鎺ュ彛 ' + jr.status);
     var json = await jr.json();
     var rows = HanhongData.normalizeApiPayload(json);
     var pr = HanhongData.parseRows(rows);
@@ -280,7 +280,7 @@
   async function loadData() {
     var loadingEl = document.getElementById('loading');
     loadingEl.style.display = 'block';
-    loadingEl.innerHTML = '加载数据中...';
+    loadingEl.innerHTML = '鍔犺浇鏁版嵁涓?..';
     var statsEl = document.getElementById('stats'); if (statsEl) statsEl.style.display = 'none';
     var chartsEl = document.getElementById('charts'); if (chartsEl) chartsEl.style.display = 'none';
     lastParseWarnings = [];
@@ -298,13 +298,13 @@
         var jr = await fetch(jsonUrl + sep + 't=' + Date.now(), {
           headers: { Accept: 'application/json' }
         });
-        if (!jr.ok) throw new Error('JSON 接口 ' + jr.status);
+        if (!jr.ok) throw new Error('JSON 鎺ュ彛 ' + jr.status);
         var json = await jr.json();
         rows = HanhongData.normalizeApiPayload(json);
       } else {
         var url = cfg.dataXlsxUrl || 'data.xlsx';
         var response = await fetch(url + '?t=' + Date.now());
-        if (!response.ok) throw new Error(url + ' 未找到 (' + response.status + ')');
+        if (!response.ok) throw new Error(url + ' 鏈壘鍒?(' + response.status + ')');
         var arrayBuffer = await response.arrayBuffer();
         var useWorker = arrayBuffer.byteLength >= (cfg.parseWorkerMinBytes || 262144);
         var parsed;
@@ -333,16 +333,16 @@
         )
       ).sort();
 
-      loadingEl.textContent = '已加载 ' + allData.length + ' 天数据';
+      loadingEl.textContent = '宸插姞杞?' + allData.length + ' 澶╂暟鎹?;
       initMonthSelector();
       var latestMonth = format(allData[allData.length - 1].date, 'yyyy-MM');
       applyViewMonth(latestMonth);
     } catch (e) {
       loadingEl.innerHTML =
-        '<span style="color:#ff6b9d">加载失败：' +
+        '<span style="color:#ff6b9d">鍔犺浇澶辫触锛? +
         (e && e.message ? e.message : String(e)) +
         '</span><br><br>' +
-        '<button type="button" class="btn" onclick="loadData()">重试</button>';
+        '<button type="button" class="btn" onclick="loadData()">閲嶈瘯</button>';
     }
   }
 
@@ -357,13 +357,13 @@
           )
         ).sort();
     var container = document.getElementById('monthSelector');
-    container.innerHTML = '<strong style="color:#00ffff; margin-right:10px;">月份切换：</strong>';
+    container.innerHTML = '<strong style="color:#00ffff; margin-right:10px;">鏈堜唤鍒囨崲锛?/strong>';
     var select = document.createElement('select');
     select.className = 'month-select';
-    select.setAttribute('aria-label', '选择统计月份');
+    select.setAttribute('aria-label', '閫夋嫨缁熻鏈堜唤');
     var allOpt = document.createElement('option');
     allOpt.value = '';
-    allOpt.textContent = '全部时间';
+    allOpt.textContent = '鍏ㄩ儴鏃堕棿';
     select.appendChild(allOpt);
     months.forEach(function (m) {
       var option = document.createElement('option');
@@ -384,7 +384,7 @@
       var sel = document.querySelector('.month-select');
       if (sel) sel.value = month;
       refetchMonthData(month).catch(function (err) {
-        alert('按月拉取失败：' + (err && err.message ? err.message : String(err)));
+        alert('鎸夋湀鎷夊彇澶辫触锛? + (err && err.message ? err.message : String(err)));
       });
       return;
     }
@@ -401,7 +401,7 @@
     var clickRate = total.totalExp > 0 ? total.visitors / total.totalExp * 100 : 0;
     var receptionRate = total.inquiries > 0 ? total.reception / total.inquiries * 100 : 0;
 
-    var momInq = '—';
+    var momInq = '鈥?;
     if (currentMonth) {
       var currentDate = new Date(currentMonth + '-01');
       var lastMonthYear = currentDate.getFullYear();
@@ -425,7 +425,7 @@
       if (lastTotal.inquiries > 0) {
         momInq = ((total.inquiries / lastTotal.inquiries - 1) * 100).toFixed(2) + '%';
       } else if (total.inquiries > 0) {
-        momInq = '∞%';
+        momInq = '鈭?';
       } else {
         momInq = '0%';
       }
@@ -447,7 +447,7 @@
     safeText('totalLeads', total.leads);
     safeText('totalDeals', total.deals.toLocaleString());
     safeText('roi', roi);
-    safeText('costPerLead', '¥' + costPerLead);
+    safeText('costPerLead', '楼' + costPerLead);
     safeText('receptionRate', receptionRate.toFixed(2) + '%');
     safeText('lastUpdate', new Date().toLocaleString('zh-CN'));
     var loadingEl2 = document.getElementById('loading');
@@ -473,13 +473,13 @@
         data: {
           labels: labels,
           datasets: [
-            { label: '总展现', data: displayData.map(function (d) {
+            { label: '鎬诲睍鐜?, data: displayData.map(function (d) {
               return d.totalExp;
             }), borderColor: '#00ffff', tension: 0.4, yAxisID: 'y' },
-            { label: '访客', data: displayData.map(function (d) {
+            { label: '璁垮', data: displayData.map(function (d) {
               return d.visitors;
             }), borderColor: '#ff00ff', tension: 0.4, yAxisID: 'y1' },
-            { label: '询盘', data: displayData.map(function (d) {
+            { label: '璇㈢洏', data: displayData.map(function (d) {
               return d.inquiries;
             }), borderColor: '#ffff00', tension: 0.4, yAxisID: 'y1' }
           ]
@@ -498,7 +498,7 @@
       new Chart(document.getElementById('pieChart'), {
         type: 'doughnut',
         data: {
-          labels: ['广告展现', '自然展现'],
+          labels: ['骞垮憡灞曠幇', '鑷劧灞曠幇'],
           datasets: [{ data: [total.adExp, total.naturalExp], backgroundColor: ['#ff00ff', '#00ffff'], borderWidth: 3 }]
         },
         options: {
@@ -528,18 +528,18 @@
         weeks[wk].inquiries += d.inquiries;
         weeks[wk].reception += d.reception;
       });
-      var weekKeys = Object.keys(weeks).sort(); // ISO周键字符串天然排序
+      var weekKeys = Object.keys(weeks).sort(); // ISO鍛ㄩ敭瀛楃涓插ぉ鐒舵帓搴?
       new Chart(document.getElementById('weeklyChart'), {
         type: 'line',
         data: {
           labels: weekKeys.map(function (wk) {
-            return '第' + parseInt(wk.split('-W')[1], 10) + '周';
+            return '绗? + parseInt(wk.split('-W')[1], 10) + '鍛?;
           }),
           datasets: [
-            { label: '周询盘', data: weekKeys.map(function (wk) {
+            { label: '鍛ㄨ鐩?, data: weekKeys.map(function (wk) {
               return weeks[wk].inquiries;
             }), borderColor: '#ff00ff', tension: 0.4 },
-            { label: '周接待', data: weekKeys.map(function (wk) {
+            { label: '鍛ㄦ帴寰?, data: weekKeys.map(function (wk) {
               return weeks[wk].reception;
             }), borderColor: '#00ffff', tension: 0.4 }
           ]
@@ -559,15 +559,15 @@
       if (oldChart) oldChart.destroy();
       var fCtx = fCvs.getContext('2d');
       var fW = fCvs.offsetWidth || fCvs.parentElement.offsetWidth || 360;
-      // 每层高度足够放两行文字，留出层间箭头空间
+      // 姣忓眰楂樺害瓒冲鏀句袱琛屾枃瀛楋紝鐣欏嚭灞傞棿绠ご绌洪棿
       var rows     = 4;
-      var rowH     = 68; // 固定每层68px
-      var arrowH   = 18; // 层间箭头区
+      var rowH     = 68; // 鍥哄畾姣忓眰68px
+      var arrowH   = 18; // 灞傞棿绠ご鍖?
       var fH       = rows * rowH + (rows - 1) * arrowH;
       fCvs.width  = fW;
       fCvs.height = fH;
       fCtx.clearRect(0, 0, fW, fH);
-      var fLabels  = ['总展现', '访客', '询盘', '接待'];
+      var fLabels  = ['鎬诲睍鐜?, '璁垮', '璇㈢洏', '鎺ュ緟'];
       var fValues  = [total.totalExp, total.visitors, total.inquiries, total.reception];
       var fColors  = ['#00ffff', '#c026d3', '#f59e0b', '#00ff88'];
       var maxVal   = fValues[0] || 1;
@@ -581,7 +581,7 @@
         var botW = (fValues[fi] / maxVal) * (maxTopW - minBotW) + minBotW;
         var topX = (fW - topW) / 2;
         var botX = (fW - botW) / 2;
-        // 梯形
+        // 姊舰
         fCtx.beginPath();
         fCtx.moveTo(topX, y0);
         fCtx.lineTo(topX + topW, y0);
@@ -593,15 +593,15 @@
         grad.addColorStop(1, fColors[fi] + 'aa');
         fCtx.fillStyle = grad;
         fCtx.fill();
-        // 标签（左，上行）
+        // 鏍囩锛堝乏锛屼笂琛岋級
         fCtx.fillStyle = '#0a0a1e';
         fCtx.font = 'bold 13px Microsoft YaHei,Arial';
         fCtx.textAlign = 'left';
         fCtx.fillText(fLabels[fi], topX + 10, midY - 4);
-        // 数值（左，下行）
+        // 鏁板€硷紙宸︼紝涓嬭锛?
         fCtx.font = '12px Microsoft YaHei,Arial';
         fCtx.fillText(fValues[fi].toLocaleString(), topX + 10, midY + 13);
-        // 转化率（右侧居中）
+        // 杞寲鐜囷紙鍙充晶灞呬腑锛?
         if (fi > 0 && fValues[fi - 1] > 0) {
           var cvRate = ((fValues[fi] / fValues[fi - 1]) * 100).toFixed(1) + '%';
           fCtx.fillStyle = '#0a0a1e';
@@ -609,7 +609,7 @@
           fCtx.textAlign = 'right';
           fCtx.fillText(cvRate, topX + topW - 10, midY + 4);
         }
-        // 层间箭头区（当前层底部 ~ 下一层顶部之间）
+        // 灞傞棿绠ご鍖猴紙褰撳墠灞傚簳閮?~ 涓嬩竴灞傞《閮ㄤ箣闂达級
         if (fi < rows - 1) {
           var nextVal = fValues[fi + 1];
           var arrRate = fValues[fi] > 0 ? ((nextVal / fValues[fi]) * 100).toFixed(1) + '%' : '';
@@ -617,7 +617,7 @@
           fCtx.fillStyle = 'rgba(200,200,220,0.9)';
           fCtx.font = '11px Microsoft YaHei,Arial';
           fCtx.textAlign = 'center';
-          fCtx.fillText('▼ 转化率 ' + arrRate, fW / 2, arrY);
+          fCtx.fillText('鈻?杞寲鐜?' + arrRate, fW / 2, arrY);
         }
       }
       return;
@@ -634,7 +634,7 @@
         type: 'bar',
         data: {
           labels: monthLabels,
-          datasets: [{ label: '月询盘', data: monthLabels.map(function (m) {
+          datasets: [{ label: '鏈堣鐩?, data: monthLabels.map(function (m) {
             return months[m];
           }), backgroundColor: '#ff00ff' }]
         },
@@ -659,7 +659,7 @@
           labels: labels,
           datasets: [
             {
-              label: '增长率%',
+              label: '澧為暱鐜?',
               data: growthData,
               backgroundColor: growthData.map(function (g) {
                 return g > 0 ? 'rgba(0,255,136,0.8)' : 'rgba(255,0,102,0.8)';
@@ -677,16 +677,16 @@
       });
       var predictions = predictFuture(displayData, 'naturalExp', 7);
       var futureLabels = Array.from({ length: 7 }, function (_, i) {
-        return '未来' + (i + 1) + '天';
+        return '鏈潵' + (i + 1) + '澶?;
       });
       new Chart(document.getElementById('naturalFlowChart'), {
         type: 'line',
         data: {
           labels: labels.concat(futureLabels),
           datasets: [
-            { label: '自然流量', data: naturalData.concat(Array(7).fill(null)), borderColor: '#00ffff', tension: 0.4 },
+            { label: '鑷劧娴侀噺', data: naturalData.concat(Array(7).fill(null)), borderColor: '#00ffff', tension: 0.4 },
             {
-              label: '预测',
+              label: '棰勬祴',
               data: Array(naturalData.length)
                 .fill(null)
                 .concat(predictions),
@@ -705,7 +705,7 @@
         type: 'line',
         data: {
           labels: labels,
-          datasets: [{ label: '广告花费', data: displayData.map(function (d) {
+          datasets: [{ label: '骞垮憡鑺辫垂', data: displayData.map(function (d) {
             return d.adSpend;
           }), borderColor: '#ff00ff', tension: 0.4 }]
         },
@@ -718,7 +718,7 @@
         type: 'line',
         data: {
           labels: labels,
-          datasets: [{ label: '线索', data: displayData.map(function (d) {
+          datasets: [{ label: '绾跨储', data: displayData.map(function (d) {
             return d.leads;
           }), borderColor: '#00ffff', tension: 0.4 }]
         },
@@ -731,7 +731,7 @@
         type: 'line',
         data: {
           labels: labels,
-          datasets: [{ label: '成交', data: displayData.map(function (d) {
+          datasets: [{ label: '鎴愪氦', data: displayData.map(function (d) {
             return d.deals;
           }), borderColor: '#ffff00', tension: 0.4 }]
         },
@@ -745,10 +745,10 @@
         data: {
           labels: labels,
           datasets: [
-            { label: '广告花费', data: displayData.map(function (d) {
+            { label: '骞垮憡鑺辫垂', data: displayData.map(function (d) {
               return d.adSpend;
             }), borderColor: '#ff00ff', tension: 0.4, yAxisID: 'y' },
-            { label: '成交金额', data: displayData.map(function (d) {
+            { label: '鎴愪氦閲戦', data: displayData.map(function (d) {
               return d.deals;
             }), borderColor: '#00ffff', tension: 0.4, yAxisID: 'y1' }
           ]
@@ -769,10 +769,10 @@
         data: {
           labels: labels,
           datasets: [
-            { label: '接待', data: displayData.map(function (d) {
+            { label: '鎺ュ緟', data: displayData.map(function (d) {
               return d.reception;
             }), borderColor: '#00ff88', tension: 0.4 },
-            { label: '询盘', data: displayData.map(function (d) {
+            { label: '璇㈢洏', data: displayData.map(function (d) {
               return d.inquiries;
             }), borderColor: '#ffff00', tension: 0.4 }
           ]
@@ -833,7 +833,7 @@
   function exportChartPng(canvasId) {
     var chart = Chart.getChart(canvasId);
     if (!chart) {
-      alert('图表尚未渲染，请先滚动到该区域。');
+      alert('鍥捐〃灏氭湭娓叉煋锛岃鍏堟粴鍔ㄥ埌璇ュ尯鍩熴€?);
       return;
     }
     var a = document.createElement('a');
@@ -867,20 +867,20 @@
   }
 
   function pct(a, b) {
-    if (!b) return '—';
+    if (!b) return '鈥?;
     return ((a / b) * 100).toFixed(2) + '%';
   }
 
   function momStr(cur, prev) {
-    if (!prev) return cur > 0 ? '<span class="pos">+∞%</span>' : '—';
+    if (!prev) return cur > 0 ? '<span class="pos">+鈭?</span>' : '鈥?;
     var r = ((cur / prev - 1) * 100);
     var rs = r.toFixed(1);
     return parseFloat(rs) >= 0
-      ? '<span class="pos">▲' + rs + '%</span>'
-      : '<span class="neg">▼' + Math.abs(r).toFixed(1) + '%</span>';
+      ? '<span class="pos">鈻? + rs + '%</span>'
+      : '<span class="neg">鈻? + Math.abs(r).toFixed(1) + '%</span>';
   }
 
-  // 在离屏canvas上渲染Chart.js图表，返回base64图片字符串
+  // 鍦ㄧ灞廲anvas涓婃覆鏌揅hart.js鍥捐〃锛岃繑鍥瀊ase64鍥剧墖瀛楃涓?
   function renderChartToBase64(config, w, h) {
     return new Promise(function (resolve) {
       var cvs = document.createElement('canvas');
@@ -888,7 +888,7 @@
       cvs.height = h || 300;
       cvs.style.cssText = 'position:absolute;left:-30000px;top:0;';
       document.body.appendChild(cvs);
-      // 关闭动画保证立即可截图
+      // 鍏抽棴鍔ㄧ敾淇濊瘉绔嬪嵆鍙埅鍥?
       config.options = config.options || {};
       config.options.animation = { duration: 0 };
       config.options.responsive = false;
@@ -903,7 +903,7 @@
     });
   }
 
-  // 公用折线图颜色方案
+  // 鍏敤鎶樼嚎鍥鹃鑹叉柟妗?
   var CHART_PALETTE = {
     blue:   { line: '#2563eb', fill: 'rgba(37,99,235,0.08)' },
     pink:   { line: '#db2777', fill: 'rgba(219,39,119,0.08)' },
@@ -913,7 +913,7 @@
   };
 
   function chartSection(title, imgSrc) {
-    return '<div style="margin:24px 0 8px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ ' + title + '</div>' +
+    return '<div style="margin:24px 0 8px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">鈻?' + title + '</div>' +
       '<img src="' + imgSrc + '" style="width:100%;border:1px solid #e0e0e0;border-radius:6px;display:block;" />';
   }
 
@@ -945,7 +945,7 @@
       if (d.date > w.maxDate) w.maxDate = d.date;
     });
 
-    var weekKeys = Object.keys(weeks).sort(); // ISO周键字符串天然按时间排序
+    var weekKeys = Object.keys(weeks).sort(); // ISO鍛ㄩ敭瀛楃涓插ぉ鐒舵寜鏃堕棿鎺掑簭
     var totals = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0 };
     weekKeys.forEach(function (wk) {
       var w = weeks[wk];
@@ -959,8 +959,8 @@
     });
 
     var styles = buildReportStyles();
-    var cols = ['周号', '日期范围', '展现量', '访客数', '询盘数', '接待数', '询盘转化率', '接待转化率',
-                '广告花费', '线索数', '单线索成本', '成交金额', 'ROI', '周询盘环比'];
+    var cols = ['鍛ㄥ彿', '鏃ユ湡鑼冨洿', '灞曠幇閲?, '璁垮鏁?, '璇㈢洏鏁?, '鎺ュ緟鏁?, '璇㈢洏杞寲鐜?, '鎺ュ緟杞寲鐜?,
+                '骞垮憡鑺辫垂', '绾跨储鏁?, '鍗曠嚎绱㈡垚鏈?, '鎴愪氦閲戦', 'ROI', '鍛ㄨ鐩樼幆姣?];
     var thRow = cols.map(function (c) { return '<th>' + c + '</th>'; }).join('');
 
     var rows = '';
@@ -968,11 +968,11 @@
       var w = weeks[wk];
       var prev = i > 0 ? weeks[weekKeys[i - 1]] : null;
       var dateRng = format(w.minDate, 'MM-dd') + '~' + format(w.maxDate, 'MM-dd');
-      var roi = w.adSpend > 0 ? ((w.deals / w.adSpend) * 100).toFixed(1) + '%' : '—';
-      var cpl = w.leads > 0 ? '¥' + (w.adSpend / w.leads).toFixed(2) : '—';
-      var weekNo = parseInt(wk.split('-W')[1], 10); // 2026年真实周号
+      var roi = w.adSpend > 0 ? ((w.deals / w.adSpend) * 100).toFixed(1) + '%' : '鈥?;
+      var cpl = w.leads > 0 ? '楼' + (w.adSpend / w.leads).toFixed(2) : '鈥?;
+      var weekNo = parseInt(wk.split('-W')[1], 10); // 2026骞寸湡瀹炲懆鍙?
       rows += '<tr>' +
-        '<td><b>第' + weekNo + '周</b></td>' +
+        '<td><b>绗? + weekNo + '鍛?/b></td>' +
         '<td>' + dateRng + '</td>' +
         '<td>' + w.totalExp.toLocaleString() + '</td>' +
         '<td>' + w.visitors.toLocaleString() + '</td>' +
@@ -980,52 +980,52 @@
         '<td>' + w.reception + '</td>' +
         '<td>' + pct(w.inquiries, w.visitors) + '</td>' +
         '<td>' + pct(w.reception, w.inquiries) + '</td>' +
-        '<td>¥' + w.adSpend.toFixed(2) + '</td>' +
+        '<td>楼' + w.adSpend.toFixed(2) + '</td>' +
         '<td>' + w.leads + '</td>' +
         '<td>' + cpl + '</td>' +
-        '<td>¥' + w.deals.toLocaleString() + '</td>' +
+        '<td>楼' + w.deals.toLocaleString() + '</td>' +
         '<td>' + roi + '</td>' +
-        '<td>' + (prev ? momStr(w.inquiries, prev.inquiries) : '—') + '</td>' +
+        '<td>' + (prev ? momStr(w.inquiries, prev.inquiries) : '鈥?) + '</td>' +
         '</tr>';
     });
 
-    var totalRoi = totals.adSpend > 0 ? ((totals.deals / totals.adSpend) * 100).toFixed(1) + '%' : '—';
-    var totalCpl = totals.leads > 0 ? '¥' + (totals.adSpend / totals.leads).toFixed(2) : '—';
+    var totalRoi = totals.adSpend > 0 ? ((totals.deals / totals.adSpend) * 100).toFixed(1) + '%' : '鈥?;
+    var totalCpl = totals.leads > 0 ? '楼' + (totals.adSpend / totals.leads).toFixed(2) : '鈥?;
     rows += '<tr class="total-row">' +
-      '<td colspan="2"><b>合 计</b></td>' +
+      '<td colspan="2"><b>鍚?璁?/b></td>' +
       '<td>' + totals.totalExp.toLocaleString() + '</td>' +
       '<td>' + totals.visitors.toLocaleString() + '</td>' +
       '<td><b>' + totals.inquiries + '</b></td>' +
       '<td>' + totals.reception + '</td>' +
       '<td>' + pct(totals.inquiries, totals.visitors) + '</td>' +
       '<td>' + pct(totals.reception, totals.inquiries) + '</td>' +
-      '<td>¥' + totals.adSpend.toFixed(2) + '</td>' +
+      '<td>楼' + totals.adSpend.toFixed(2) + '</td>' +
       '<td>' + totals.leads + '</td>' +
       '<td>' + totalCpl + '</td>' +
-      '<td>¥' + totals.deals.toLocaleString() + '</td>' +
+      '<td>楼' + totals.deals.toLocaleString() + '</td>' +
       '<td>' + totalRoi + '</td>' +
-      '<td>—</td>' +
+      '<td>鈥?/td>' +
       '</tr>';
 
-    var rangeLabel = currentMonth ? currentMonth + ' 月（第' + weekKeys.map(function(wk){ return parseInt(wk.split('-W')[1],10); }).join('/') + '周）' : '全部时间';
-    var totalConvRate = totals.visitors > 0 ? ((totals.inquiries / totals.visitors) * 100).toFixed(2) + '%' : '—';
-    var totalRecRate  = totals.inquiries > 0 ? ((totals.reception / totals.inquiries) * 100).toFixed(2) + '%' : '—';
+    var rangeLabel = currentMonth ? currentMonth + ' 鏈堬紙绗? + weekKeys.map(function(wk){ return parseInt(wk.split('-W')[1],10); }).join('/') + '鍛級' : '鍏ㄩ儴鏃堕棿';
+    var totalConvRate = totals.visitors > 0 ? ((totals.inquiries / totals.visitors) * 100).toFixed(2) + '%' : '鈥?;
+    var totalRecRate  = totals.inquiries > 0 ? ((totals.reception / totals.inquiries) * 100).toFixed(2) + '%' : '鈥?;
     if (!assertPdfLibs()) return;
 
-    // ── 生成折线图1：周询盘 + 周接待 + 周访客 ──
-    var wkLabels = weekKeys.map(function (wk) { return '第' + parseInt(wk.split('-W')[1], 10) + '周'; });
+    // 鈹€鈹€ 鐢熸垚鎶樼嚎鍥?锛氬懆璇㈢洏 + 鍛ㄦ帴寰?+ 鍛ㄨ瀹?鈹€鈹€
+    var wkLabels = weekKeys.map(function (wk) { return '绗? + parseInt(wk.split('-W')[1], 10) + '鍛?; });
     var chart1Img = await renderChartToBase64({
       type: 'line',
       data: {
         labels: wkLabels,
         datasets: [
-          { label: '询盘数', data: weekKeys.map(function(w){ return weeks[w].inquiries; }),
+          { label: '璇㈢洏鏁?, data: weekKeys.map(function(w){ return weeks[w].inquiries; }),
             borderColor: CHART_PALETTE.blue.line, backgroundColor: CHART_PALETTE.blue.fill,
             borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.blue.line, fill: true, tension: 0.35, yAxisID: 'y' },
-          { label: '接待数', data: weekKeys.map(function(w){ return weeks[w].reception; }),
+          { label: '鎺ュ緟鏁?, data: weekKeys.map(function(w){ return weeks[w].reception; }),
             borderColor: CHART_PALETTE.green.line, backgroundColor: CHART_PALETTE.green.fill,
             borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.green.line, fill: false, tension: 0.35, yAxisID: 'y' },
-          { label: '访客数', data: weekKeys.map(function(w){ return weeks[w].visitors; }),
+          { label: '璁垮鏁?, data: weekKeys.map(function(w){ return weeks[w].visitors; }),
             borderColor: CHART_PALETTE.purple.line, backgroundColor: CHART_PALETTE.purple.fill,
             borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.purple.line, fill: false, tension: 0.35, yAxisID: 'y1',
             borderDash: [5, 3] }
@@ -1038,33 +1038,33 @@
             formatter: function(v, ctx) { return ctx.dataset.yAxisID === 'y1' ? '' : v; } }
         },
         scales: {
-          y:  { position: 'left',  title: { display: true, text: '询盘 / 接待', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
-          y1: { position: 'right', title: { display: true, text: '访客数', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+          y:  { position: 'left',  title: { display: true, text: '璇㈢洏 / 鎺ュ緟', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '璁垮鏁?, color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
         }
       }
     }, 1120, 310);
 
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + '</style></head><body>' +
       '<div class="rpt-wrap">' +
-      '<div class="rpt-title">📊 周度汇总报告</div>' +
-      '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
-      '<div class="rpt-meta"><span>统计范围：' + rangeLabel + '</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
+      '<div class="rpt-title">馃搳 鍛ㄥ害姹囨€绘姤鍛?/div>' +
+      '<div class="rpt-subtitle">姹夐缚搴楅摵 路 闃块噷宸村反鏁版嵁鎴樻儏瀹?/div>' +
+      '<div class="rpt-meta"><span>缁熻鑼冨洿锛? + rangeLabel + '</span><span>鐢熸垚鏃堕棿锛? + new Date().toLocaleString('zh-CN') + '</span></div>' +
       '<div class="kpi-grid">' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.totalExp.toLocaleString() + '</div><div class="kpi-lbl">总展现量</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.visitors.toLocaleString() + '</div><div class="kpi-lbl">总访客数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">总询盘数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.reception + '</div><div class="kpi-lbl">总接待数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalConvRate + '</div><div class="kpi-lbl">询盘转化率</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalRecRate + '</div><div class="kpi-lbl">接待转化率</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.leads + '</div><div class="kpi-lbl">总线索数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalCpl + '</div><div class="kpi-lbl">单线索成本</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">¥' + totals.adSpend.toFixed(0) + '</div><div class="kpi-lbl">总广告花费</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">¥' + totals.deals.toLocaleString() + '</div><div class="kpi-lbl">总成交金额</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">综合ROI</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + weekKeys.length + ' 周</div><div class="kpi-lbl">统计周数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.totalExp.toLocaleString() + '</div><div class="kpi-lbl">鎬诲睍鐜伴噺</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.visitors.toLocaleString() + '</div><div class="kpi-lbl">鎬昏瀹㈡暟</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">鎬昏鐩樻暟</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.reception + '</div><div class="kpi-lbl">鎬绘帴寰呮暟</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalConvRate + '</div><div class="kpi-lbl">璇㈢洏杞寲鐜?/div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRecRate + '</div><div class="kpi-lbl">鎺ュ緟杞寲鐜?/div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.leads + '</div><div class="kpi-lbl">鎬荤嚎绱㈡暟</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalCpl + '</div><div class="kpi-lbl">鍗曠嚎绱㈡垚鏈?/div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">楼' + totals.adSpend.toFixed(0) + '</div><div class="kpi-lbl">鎬诲箍鍛婅姳璐?/div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">楼' + totals.deals.toLocaleString() + '</div><div class="kpi-lbl">鎬绘垚浜ら噾棰?/div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">缁煎悎ROI</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + weekKeys.length + ' 鍛?/div><div class="kpi-lbl">缁熻鍛ㄦ暟</div></div>' +
       '</div>' +
-      chartSection('周询盘 · 接待 · 访客趋势', chart1Img) +
-      '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ 周度明细数据</div>' +
+      chartSection('鍛ㄨ鐩?路 鎺ュ緟 路 璁垮瓒嬪娍', chart1Img) +
+      '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">鈻?鍛ㄥ害鏄庣粏鏁版嵁</div>' +
       '<table><thead><tr>' + thRow + '</tr></thead><tbody>' + rows + '</tbody></table>' +
       '</div></body></html>';
 
@@ -1074,22 +1074,22 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      // 单页自定义高度，彻底不分页不截断
+      // 鍗曢〉鑷畾涔夐珮搴︼紝褰诲簳涓嶅垎椤典笉鎴柇
       var pdfW = 297;
       var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
       var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save('周度汇总_' + (currentMonth || '全期') + '.pdf');
-      alert('✅ 周度汇总已下载（完整单页，无截断）');
+      pdf.save('鍛ㄥ害姹囨€籣' + (currentMonth || '鍏ㄦ湡') + '.pdf');
+      alert('鉁?鍛ㄥ害姹囨€诲凡涓嬭浇锛堝畬鏁村崟椤碉紝鏃犳埅鏂級');
     } catch (err) {
-      alert('导出失败：' + (err && err.message ? err.message : String(err)));
+      alert('瀵煎嚭澶辫触锛? + (err && err.message ? err.message : String(err)));
     } finally {
       document.body.removeChild(tempContainer);
     }
   }
 
   async function downloadMonthlySummary() {
-    // 收集所有可用月份供用户多选
+    // 鏀堕泦鎵€鏈夊彲鐢ㄦ湀浠戒緵鐢ㄦ埛澶氶€?
     var allMonths = [];
     allData.forEach(function(d) {
       var m = format(d.date, 'yyyy-MM');
@@ -1098,8 +1098,8 @@
     allMonths.sort();
     var selectedMonths = allMonths;
     if (allMonths.length > 0) {
-      var picked = await showPickerDialog('📈 选择要下载的月份', allMonths);
-      if (!picked) return; // 用户取消
+      var picked = await showPickerDialog('馃搱 閫夋嫨瑕佷笅杞界殑鏈堜唤', allMonths);
+      if (!picked) return; // 鐢ㄦ埛鍙栨秷
       selectedMonths = picked;
     }
 
@@ -1133,17 +1133,17 @@
     });
 
     var styles = buildReportStyles();
-    var cols = ['月份', '展现量', '访客数', '询盘数', '接待数', '询盘转化率', '接待转化率',
-                '广告花费', '广告占比', '线索数', '单线索成本', '成交金额', 'ROI', '月询盘环比'];
+    var cols = ['鏈堜唤', '灞曠幇閲?, '璁垮鏁?, '璇㈢洏鏁?, '鎺ュ緟鏁?, '璇㈢洏杞寲鐜?, '鎺ュ緟杞寲鐜?,
+                '骞垮憡鑺辫垂', '骞垮憡鍗犳瘮', '绾跨储鏁?, '鍗曠嚎绱㈡垚鏈?, '鎴愪氦閲戦', 'ROI', '鏈堣鐩樼幆姣?];
     var thRow = cols.map(function (c) { return '<th>' + c + '</th>'; }).join('');
 
     var rows = '';
     monthKeys.forEach(function (mk, i) {
       var m = months[mk];
       var prev = i > 0 ? months[monthKeys[i - 1]] : null;
-      var roi = m.adSpend > 0 ? ((m.deals / m.adSpend) * 100).toFixed(1) + '%' : '—';
-      var cpl = m.leads > 0 ? '¥' + (m.adSpend / m.leads).toFixed(2) : '—';
-      var adPct = m.totalExp > 0 ? ((m.adExp / m.totalExp) * 100).toFixed(1) + '%' : '—';
+      var roi = m.adSpend > 0 ? ((m.deals / m.adSpend) * 100).toFixed(1) + '%' : '鈥?;
+      var cpl = m.leads > 0 ? '楼' + (m.adSpend / m.leads).toFixed(2) : '鈥?;
+      var adPct = m.totalExp > 0 ? ((m.adExp / m.totalExp) * 100).toFixed(1) + '%' : '鈥?;
       rows += '<tr>' +
         '<td><b>' + mk + '</b></td>' +
         '<td>' + m.totalExp.toLocaleString() + '</td>' +
@@ -1152,50 +1152,50 @@
         '<td>' + m.reception + '</td>' +
         '<td>' + pct(m.inquiries, m.visitors) + '</td>' +
         '<td>' + pct(m.reception, m.inquiries) + '</td>' +
-        '<td>¥' + m.adSpend.toFixed(2) + '</td>' +
+        '<td>楼' + m.adSpend.toFixed(2) + '</td>' +
         '<td>' + adPct + '</td>' +
         '<td>' + m.leads + '</td>' +
         '<td>' + cpl + '</td>' +
-        '<td>¥' + m.deals.toLocaleString() + '</td>' +
+        '<td>楼' + m.deals.toLocaleString() + '</td>' +
         '<td>' + roi + '</td>' +
-        '<td>' + (prev ? momStr(m.inquiries, prev.inquiries) : '—') + '</td>' +
+        '<td>' + (prev ? momStr(m.inquiries, prev.inquiries) : '鈥?) + '</td>' +
         '</tr>';
     });
 
-    var totalRoi = totals.adSpend > 0 ? ((totals.deals / totals.adSpend) * 100).toFixed(1) + '%' : '—';
-    var totalCpl = totals.leads > 0 ? '¥' + (totals.adSpend / totals.leads).toFixed(2) : '—';
+    var totalRoi = totals.adSpend > 0 ? ((totals.deals / totals.adSpend) * 100).toFixed(1) + '%' : '鈥?;
+    var totalCpl = totals.leads > 0 ? '楼' + (totals.adSpend / totals.leads).toFixed(2) : '鈥?;
     rows += '<tr class="total-row">' +
-      '<td><b>合 计</b></td>' +
+      '<td><b>鍚?璁?/b></td>' +
       '<td>' + totals.totalExp.toLocaleString() + '</td>' +
       '<td>' + totals.visitors.toLocaleString() + '</td>' +
       '<td><b>' + totals.inquiries + '</b></td>' +
       '<td>' + totals.reception + '</td>' +
       '<td>' + pct(totals.inquiries, totals.visitors) + '</td>' +
       '<td>' + pct(totals.reception, totals.inquiries) + '</td>' +
-      '<td>¥' + totals.adSpend.toFixed(2) + '</td>' +
-      '<td>—</td>' +
+      '<td>楼' + totals.adSpend.toFixed(2) + '</td>' +
+      '<td>鈥?/td>' +
       '<td>' + totals.leads + '</td>' +
       '<td>' + totalCpl + '</td>' +
-      '<td>¥' + totals.deals.toLocaleString() + '</td>' +
+      '<td>楼' + totals.deals.toLocaleString() + '</td>' +
       '<td>' + totalRoi + '</td>' +
-      '<td>—</td>' +
+      '<td>鈥?/td>' +
       '</tr>';
 
     if (!assertPdfLibs()) return;
 
-    // ── 生成折线图1：月度询盘 + 接待 + 访客 ──
+    // 鈹€鈹€ 鐢熸垚鎶樼嚎鍥?锛氭湀搴﹁鐩?+ 鎺ュ緟 + 璁垮 鈹€鈹€
     var chart3Img = await renderChartToBase64({
       type: 'line',
       data: {
         labels: monthKeys,
         datasets: [
-          { label: '询盘数', data: monthKeys.map(function(m){ return months[m].inquiries; }),
+          { label: '璇㈢洏鏁?, data: monthKeys.map(function(m){ return months[m].inquiries; }),
             borderColor: CHART_PALETTE.blue.line, backgroundColor: CHART_PALETTE.blue.fill,
             borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.blue.line, fill: true, tension: 0.4, yAxisID: 'y' },
-          { label: '接待数', data: monthKeys.map(function(m){ return months[m].reception; }),
+          { label: '鎺ュ緟鏁?, data: monthKeys.map(function(m){ return months[m].reception; }),
             borderColor: CHART_PALETTE.green.line, backgroundColor: CHART_PALETTE.green.fill,
             borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.green.line, fill: false, tension: 0.4, yAxisID: 'y' },
-          { label: '访客数', data: monthKeys.map(function(m){ return months[m].visitors; }),
+          { label: '璁垮鏁?, data: monthKeys.map(function(m){ return months[m].visitors; }),
             borderColor: CHART_PALETTE.purple.line, borderWidth: 2, pointRadius: 4,
             pointBackgroundColor: CHART_PALETTE.purple.line, fill: false, tension: 0.4, yAxisID: 'y1', borderDash: [5, 3] }
         ]
@@ -1207,13 +1207,13 @@
             formatter: function(v, ctx) { return ctx.dataset.yAxisID === 'y1' ? '' : v; } }
         },
         scales: {
-          y:  { position: 'left',  title: { display: true, text: '询盘 / 接待', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
-          y1: { position: 'right', title: { display: true, text: '访客数', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+          y:  { position: 'left',  title: { display: true, text: '璇㈢洏 / 鎺ュ緟', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '璁垮鏁?, color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
         }
       }
     }, 1200, 320);
 
-    // ── 生成折线图2：广告花费(柱) + ROI(线) ──
+    // 鈹€鈹€ 鐢熸垚鎶樼嚎鍥?锛氬箍鍛婅姳璐?鏌? + ROI(绾? 鈹€鈹€
     var roiData = monthKeys.map(function(m) {
       var mo = months[m];
       return mo.adSpend > 0 ? parseFloat(((mo.deals / mo.adSpend) * 100).toFixed(1)) : 0;
@@ -1223,7 +1223,7 @@
       data: {
         labels: monthKeys,
         datasets: [
-          { type: 'bar', label: '广告花费(¥)',
+          { type: 'bar', label: '骞垮憡鑺辫垂(楼)',
             data: monthKeys.map(function(m){ return months[m].adSpend; }),
             backgroundColor: 'rgba(217,119,6,0.65)', borderColor: CHART_PALETTE.orange.line, borderWidth: 1.5, yAxisID: 'y' },
           { type: 'line', label: 'ROI(%)',
@@ -1239,23 +1239,23 @@
           datalabels: { display: false }
         },
         scales: {
-          y:  { position: 'left',  title: { display: true, text: '广告花费(¥)', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y:  { position: 'left',  title: { display: true, text: '骞垮憡鑺辫垂(楼)', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
           y1: { position: 'right', title: { display: true, text: 'ROI(%)', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
         }
       }
     }, 1200, 320);
 
-    var mConvRate = totals.visitors > 0 ? ((totals.inquiries / totals.visitors) * 100).toFixed(2) + '%' : '—';
-    var mRecRate  = totals.inquiries > 0 ? ((totals.reception / totals.inquiries) * 100).toFixed(2) + '%' : '—';
+    var mConvRate = totals.visitors > 0 ? ((totals.inquiries / totals.visitors) * 100).toFixed(2) + '%' : '鈥?;
+    var mRecRate  = totals.inquiries > 0 ? ((totals.reception / totals.inquiries) * 100).toFixed(2) + '%' : '鈥?;
 
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + '</style></head><body>' +
       '<div class="rpt-wrap">' +
-      '<div class="rpt-title">📈 月度汇总报告</div>' +
-      '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
-      '<div class="rpt-meta"><span>统计月份：' + (monthKeys[0] || '') + ' 至 ' + (monthKeys[monthKeys.length-1] || '') + '（共 ' + monthKeys.length + ' 个月）</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
-      chartSection('月度询盘 · 接待 · 访客趋势', chart3Img) +
-      chartSection('月度广告花费（柱）& ROI趋势（折线）', chart4Img) +
-      '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ 月度明细数据</div>' +
+      '<div class="rpt-title">馃搱 鏈堝害姹囨€绘姤鍛?/div>' +
+      '<div class="rpt-subtitle">姹夐缚搴楅摵 路 闃块噷宸村反鏁版嵁鎴樻儏瀹?/div>' +
+      '<div class="rpt-meta"><span>缁熻鏈堜唤锛? + (monthKeys[0] || '') + ' 鑷?' + (monthKeys[monthKeys.length-1] || '') + '锛堝叡 ' + monthKeys.length + ' 涓湀锛?/span><span>鐢熸垚鏃堕棿锛? + new Date().toLocaleString('zh-CN') + '</span></div>' +
+      chartSection('鏈堝害璇㈢洏 路 鎺ュ緟 路 璁垮瓒嬪娍', chart3Img) +
+      chartSection('鏈堝害骞垮憡鑺辫垂锛堟煴锛? ROI瓒嬪娍锛堟姌绾匡級', chart4Img) +
+      '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">鈻?鏈堝害鏄庣粏鏁版嵁</div>' +
       '<table><thead><tr>' + thRow + '</tr></thead><tbody>' + rows + '</tbody></table>' +
       '</div></body></html>';
 
@@ -1269,31 +1269,31 @@
       var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
       var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save('月度汇总_' + selectedMonths.join('_') + '.pdf');
-      alert('✅ 月度汇总已下载（' + selectedMonths.length + '个月，完整单页无截断）');
+      pdf.save('鏈堝害姹囨€籣' + selectedMonths.join('_') + '.pdf');
+      alert('鉁?鏈堝害姹囨€诲凡涓嬭浇锛? + selectedMonths.length + '涓湀锛屽畬鏁村崟椤垫棤鎴柇锛?);
     } catch (err) {
-      alert('导出失败：' + (err && err.message ? err.message : String(err)));
+      alert('瀵煎嚭澶辫触锛? + (err && err.message ? err.message : String(err)));
     } finally {
       document.body.removeChild(tempContainer);
     }
   }
 
   async function downloadAnnualSummary() {
-    // 收集所有年份供用户选择
+    // 鏀堕泦鎵€鏈夊勾浠戒緵鐢ㄦ埛閫夋嫨
     var availableYears = [];
     allData.forEach(function (d) {
       var y = String(d.date.getFullYear());
       if (availableYears.indexOf(y) === -1) availableYears.push(y);
     });
     availableYears.sort();
-    var selectedYears = availableYears; // 默认全选
+    var selectedYears = availableYears; // 榛樿鍏ㄩ€?
     if (availableYears.length > 0) {
-      var picked = await showPickerDialog('📅 选择要下载的年度', availableYears);
-      if (!picked) return; // 用户取消
+      var picked = await showPickerDialog('馃搮 閫夋嫨瑕佷笅杞界殑骞村害', availableYears);
+      if (!picked) return; // 鐢ㄦ埛鍙栨秷
       selectedYears = picked;
     }
 
-    // 按年分组
+    // 鎸夊勾鍒嗙粍
     var years = {};
     allData.filter(function(d){
       return selectedYears.indexOf(String(d.date.getFullYear())) !== -1;
@@ -1314,7 +1314,7 @@
 
     var yearKeys = Object.keys(years).sort();
 
-    // 同时按月汇总（用于月明细表）
+    // 鍚屾椂鎸夋湀姹囨€伙紙鐢ㄤ簬鏈堟槑缁嗚〃锛?
     var monthMap = {};
     allData.filter(function(d){
       return selectedYears.indexOf(String(d.date.getFullYear())) !== -1;
@@ -1332,49 +1332,49 @@
 
     var styles = buildReportStyles();
 
-    // 年度核心指标表
+    // 骞村害鏍稿績鎸囨爣琛?
     var yearRows = '';
     yearKeys.forEach(function (yk, i) {
       var y = years[yk];
       var prev = i > 0 ? years[yearKeys[i - 1]] : null;
-      var roi = y.adSpend > 0 ? ((y.deals / y.adSpend) * 100).toFixed(1) + '%' : '—';
-      var cpl = y.leads > 0 ? '¥' + (y.adSpend / y.leads).toFixed(2) : '—';
+      var roi = y.adSpend > 0 ? ((y.deals / y.adSpend) * 100).toFixed(1) + '%' : '鈥?;
+      var cpl = y.leads > 0 ? '楼' + (y.adSpend / y.leads).toFixed(2) : '鈥?;
       yearRows += '<tr>' +
-        '<td><b>' + yk + '年</b></td>' +
+        '<td><b>' + yk + '骞?/b></td>' +
         '<td>' + y.totalExp.toLocaleString() + '</td>' +
         '<td>' + y.visitors.toLocaleString() + '</td>' +
         '<td><b>' + y.inquiries + '</b></td>' +
         '<td>' + y.reception + '</td>' +
         '<td>' + pct(y.inquiries, y.visitors) + '</td>' +
         '<td>' + pct(y.reception, y.inquiries) + '</td>' +
-        '<td>¥' + y.adSpend.toFixed(2) + '</td>' +
+        '<td>楼' + y.adSpend.toFixed(2) + '</td>' +
         '<td>' + y.leads + '</td>' +
         '<td>' + cpl + '</td>' +
-        '<td>¥' + y.deals.toLocaleString() + '</td>' +
-        '<td>' + (y.dealCount > 0 ? y.dealCount : '—') + '</td>' +
+        '<td>楼' + y.deals.toLocaleString() + '</td>' +
+        '<td>' + (y.dealCount > 0 ? y.dealCount : '鈥?) + '</td>' +
         '<td>' + roi + '</td>' +
-        '<td>' + (prev ? momStr(y.inquiries, prev.inquiries) : '—') + '</td>' +
+        '<td>' + (prev ? momStr(y.inquiries, prev.inquiries) : '鈥?) + '</td>' +
         '</tr>';
     });
 
-    // 月明细表
+    // 鏈堟槑缁嗚〃
     var monthKeys2 = Object.keys(monthMap).sort();
     var monthRows = '';
     monthKeys2.forEach(function (mk, i) {
       var m = monthMap[mk];
       var prev = i > 0 ? monthMap[monthKeys2[i - 1]] : null;
-      var roi = m.adSpend > 0 ? ((m.deals / m.adSpend) * 100).toFixed(1) + '%' : '—';
+      var roi = m.adSpend > 0 ? ((m.deals / m.adSpend) * 100).toFixed(1) + '%' : '鈥?;
       monthRows += '<tr>' +
         '<td><b>' + mk + '</b></td>' +
         '<td>' + m.visitors.toLocaleString() + '</td>' +
         '<td><b>' + m.inquiries + '</b></td>' +
         '<td>' + m.reception + '</td>' +
         '<td>' + pct(m.inquiries, m.visitors) + '</td>' +
-        '<td>¥' + m.adSpend.toFixed(2) + '</td>' +
+        '<td>楼' + m.adSpend.toFixed(2) + '</td>' +
         '<td>' + m.leads + '</td>' +
-        '<td>¥' + m.deals.toLocaleString() + '</td>' +
+        '<td>楼' + m.deals.toLocaleString() + '</td>' +
         '<td>' + roi + '</td>' +
-        '<td>' + (prev ? momStr(m.inquiries, prev.inquiries) : '—') + '</td>' +
+        '<td>' + (prev ? momStr(m.inquiries, prev.inquiries) : '鈥?) + '</td>' +
         '</tr>';
     });
 
@@ -1383,21 +1383,21 @@
     }).reduce(function (a, d) {
       return { inquiries: a.inquiries + d.inquiries, adSpend: a.adSpend + d.adSpend, deals: a.deals + d.deals, visitors: a.visitors + d.visitors, leads: a.leads + d.leads };
     }, { inquiries: 0, adSpend: 0, deals: 0, visitors: 0, leads: 0 });
-    var totalRoi = totalAll.adSpend > 0 ? ((totalAll.deals / totalAll.adSpend) * 100).toFixed(1) + '%' : '—';
+    var totalRoi = totalAll.adSpend > 0 ? ((totalAll.deals / totalAll.adSpend) * 100).toFixed(1) + '%' : '鈥?;
 
     if (!assertPdfLibs()) return;
 
-    // ── 折线图1：月度询盘 + 成交金额双轴趋势 ──
+    // 鈹€鈹€ 鎶樼嚎鍥?锛氭湀搴﹁鐩?+ 鎴愪氦閲戦鍙岃酱瓒嬪娍 鈹€鈹€
     var chart5Img = await renderChartToBase64({
       type: 'line',
       data: {
         labels: monthKeys2,
         datasets: [
-          { label: '月询盘', data: monthKeys2.map(function(m){ return monthMap[m].inquiries; }),
+          { label: '鏈堣鐩?, data: monthKeys2.map(function(m){ return monthMap[m].inquiries; }),
             borderColor: CHART_PALETTE.blue.line, backgroundColor: CHART_PALETTE.blue.fill,
             borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.blue.line,
             fill: true, tension: 0.4, yAxisID: 'y' },
-          { label: '成交金额(¥)', data: monthKeys2.map(function(m){ return monthMap[m].deals; }),
+          { label: '鎴愪氦閲戦(楼)', data: monthKeys2.map(function(m){ return monthMap[m].deals; }),
             borderColor: CHART_PALETTE.pink.line, backgroundColor: 'transparent',
             borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.pink.line,
             fill: false, tension: 0.4, yAxisID: 'y1' }
@@ -1410,27 +1410,27 @@
             formatter: function(v, ctx) { return ctx.dataset.yAxisID === 'y1' ? '' : v; } }
         },
         scales: {
-          y:  { position: 'left',  title: { display: true, text: '月询盘数', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
-          y1: { position: 'right', title: { display: true, text: '成交金额(¥)', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+          y:  { position: 'left',  title: { display: true, text: '鏈堣鐩樻暟', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '鎴愪氦閲戦(楼)', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
         }
       }
     }, 1200, 300);
 
-    // ── 折线图2：月度广告花费 + 访客 + 线索 ──
+    // 鈹€鈹€ 鎶樼嚎鍥?锛氭湀搴﹀箍鍛婅姳璐?+ 璁垮 + 绾跨储 鈹€鈹€
     var chart6Img = await renderChartToBase64({
       type: 'line',
       data: {
         labels: monthKeys2,
         datasets: [
-          { label: '广告花费(¥)', data: monthKeys2.map(function(m){ return monthMap[m].adSpend; }),
+          { label: '骞垮憡鑺辫垂(楼)', data: monthKeys2.map(function(m){ return monthMap[m].adSpend; }),
             borderColor: CHART_PALETTE.orange.line, backgroundColor: CHART_PALETTE.orange.fill,
             borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.orange.line,
             fill: true, tension: 0.4, yAxisID: 'y' },
-          { label: '访客数', data: monthKeys2.map(function(m){ return monthMap[m].visitors; }),
+          { label: '璁垮鏁?, data: monthKeys2.map(function(m){ return monthMap[m].visitors; }),
             borderColor: CHART_PALETTE.purple.line, backgroundColor: 'transparent',
             borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.purple.line,
             fill: false, tension: 0.4, yAxisID: 'y1', borderDash: [5, 3] },
-          { label: '线索数', data: monthKeys2.map(function(m){ return monthMap[m].leads; }),
+          { label: '绾跨储鏁?, data: monthKeys2.map(function(m){ return monthMap[m].leads; }),
             borderColor: CHART_PALETTE.green.line, backgroundColor: 'transparent',
             borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.green.line,
             fill: false, tension: 0.4, yAxisID: 'y' }
@@ -1442,8 +1442,8 @@
           datalabels: { display: false }
         },
         scales: {
-          y:  { position: 'left',  title: { display: true, text: '花费(¥) / 线索', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
-          y1: { position: 'right', title: { display: true, text: '访客数', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+          y:  { position: 'left',  title: { display: true, text: '鑺辫垂(楼) / 绾跨储', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '璁垮鏁?, color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
         }
       }
     }, 1200, 300);
@@ -1451,25 +1451,25 @@
     var extraStyles = ' h2{color:#1a1a2e;margin:24px 0 8px;font-size:16px;border-bottom:2px solid #1a1a2e;padding-bottom:4px;}';
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + extraStyles + '</style></head><body>' +
       '<div class="rpt-wrap">' +
-      '<div class="rpt-title">📊 年度汇总报告（' + selectedYears.join('、') + '年）</div>' +
-      '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
-      '<div class="rpt-meta"><span>数据跨度：' + (monthKeys2[0] || '—') + ' 至 ' + (monthKeys2[monthKeys2.length - 1] || '—') + '</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
+      '<div class="rpt-title">馃搳 骞村害姹囨€绘姤鍛婏紙' + selectedYears.join('銆?) + '骞达級</div>' +
+      '<div class="rpt-subtitle">姹夐缚搴楅摵 路 闃块噷宸村反鏁版嵁鎴樻儏瀹?/div>' +
+      '<div class="rpt-meta"><span>鏁版嵁璺ㄥ害锛? + (monthKeys2[0] || '鈥?) + ' 鑷?' + (monthKeys2[monthKeys2.length - 1] || '鈥?) + '</span><span>鐢熸垚鏃堕棿锛? + new Date().toLocaleString('zh-CN') + '</span></div>' +
       '<div class="kpi-grid">' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalAll.inquiries + '</div><div class="kpi-lbl">累计询盘</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalAll.visitors.toLocaleString() + '</div><div class="kpi-lbl">累计访客</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">¥' + totalAll.adSpend.toFixed(0) + '</div><div class="kpi-lbl">累计广告花费</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">¥' + totalAll.deals.toLocaleString() + '</div><div class="kpi-lbl">累计成交金额</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + pct(totalAll.inquiries, totalAll.visitors) + '</div><div class="kpi-lbl">综合询盘转化率</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalAll.leads + '</div><div class="kpi-lbl">累计线索</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + (totalAll.leads > 0 ? '¥' + (totalAll.adSpend / totalAll.leads).toFixed(2) : '—') + '</div><div class="kpi-lbl">综合单线索成本</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">综合ROI</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalAll.inquiries + '</div><div class="kpi-lbl">绱璇㈢洏</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalAll.visitors.toLocaleString() + '</div><div class="kpi-lbl">绱璁垮</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">楼' + totalAll.adSpend.toFixed(0) + '</div><div class="kpi-lbl">绱骞垮憡鑺辫垂</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">楼' + totalAll.deals.toLocaleString() + '</div><div class="kpi-lbl">绱鎴愪氦閲戦</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + pct(totalAll.inquiries, totalAll.visitors) + '</div><div class="kpi-lbl">缁煎悎璇㈢洏杞寲鐜?/div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalAll.leads + '</div><div class="kpi-lbl">绱绾跨储</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + (totalAll.leads > 0 ? '楼' + (totalAll.adSpend / totalAll.leads).toFixed(2) : '鈥?) + '</div><div class="kpi-lbl">缁煎悎鍗曠嚎绱㈡垚鏈?/div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">缁煎悎ROI</div></div>' +
       '</div>' +
-      chartSection('月度询盘 & 成交金额趋势', chart5Img) +
-      chartSection('月度广告花费 · 访客 · 线索趋势', chart6Img) +
-      '<h2>▌ 年度对比（按年汇总）</h2>' +
-      '<table><thead><tr><th>年份</th><th>展现量</th><th>访客数</th><th>询盘数</th><th>接待数</th><th>询盘转化率</th><th>接待转化率</th><th>广告花费</th><th>线索</th><th>单线索成本</th><th>成交金额</th><th>成交笔数</th><th>ROI</th><th>询盘年同比</th></tr></thead><tbody>' + yearRows + '</tbody></table>' +
-      '<h2>▌ 月度明细（所有月份）</h2>' +
-      '<table><thead><tr><th>月份</th><th>访客数</th><th>询盘数</th><th>接待数</th><th>询盘转化率</th><th>广告花费</th><th>线索</th><th>成交金额</th><th>ROI</th><th>月询盘环比</th></tr></thead><tbody>' + monthRows + '</tbody></table>' +
+      chartSection('鏈堝害璇㈢洏 & 鎴愪氦閲戦瓒嬪娍', chart5Img) +
+      chartSection('鏈堝害骞垮憡鑺辫垂 路 璁垮 路 绾跨储瓒嬪娍', chart6Img) +
+      '<h2>鈻?骞村害瀵规瘮锛堟寜骞存眹鎬伙級</h2>' +
+      '<table><thead><tr><th>骞翠唤</th><th>灞曠幇閲?/th><th>璁垮鏁?/th><th>璇㈢洏鏁?/th><th>鎺ュ緟鏁?/th><th>璇㈢洏杞寲鐜?/th><th>鎺ュ緟杞寲鐜?/th><th>骞垮憡鑺辫垂</th><th>绾跨储</th><th>鍗曠嚎绱㈡垚鏈?/th><th>鎴愪氦閲戦</th><th>鎴愪氦绗旀暟</th><th>ROI</th><th>璇㈢洏骞村悓姣?/th></tr></thead><tbody>' + yearRows + '</tbody></table>' +
+      '<h2>鈻?鏈堝害鏄庣粏锛堟墍鏈夋湀浠斤級</h2>' +
+      '<table><thead><tr><th>鏈堜唤</th><th>璁垮鏁?/th><th>璇㈢洏鏁?/th><th>鎺ュ緟鏁?/th><th>璇㈢洏杞寲鐜?/th><th>骞垮憡鑺辫垂</th><th>绾跨储</th><th>鎴愪氦閲戦</th><th>ROI</th><th>鏈堣鐩樼幆姣?/th></tr></thead><tbody>' + monthRows + '</tbody></table>' +
       '</div></body></html>';
 
     var tempContainer = document.createElement('div');
@@ -1482,10 +1482,10 @@
       var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
       var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
       pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save('年度汇总_' + selectedYears.join('-') + '.pdf');
-      alert('✅ 年度汇总已下载（' + selectedYears.join('、') + '年，完整单页无截断）');
+      pdf.save('骞村害姹囨€籣' + selectedYears.join('-') + '.pdf');
+      alert('鉁?骞村害姹囨€诲凡涓嬭浇锛? + selectedYears.join('銆?) + '骞达紝瀹屾暣鍗曢〉鏃犳埅鏂級');
     } catch (err) {
-      alert('导出失败：' + (err && err.message ? err.message : String(err)));
+      alert('瀵煎嚭澶辫触锛? + (err && err.message ? err.message : String(err)));
     } finally {
       document.body.removeChild(tempContainer);
     }
@@ -1532,10 +1532,12 @@
     var img = document.getElementById('enlargedChartImg');
     if (!m || !img) return;
     img.src = chart.toBase64Image();
-    img.alt = '图表预览';
+    img.alt = '鍥捐〃棰勮';
     m.style.display = 'block';
   };
 
   initChartModal();
   loadData();
 })();
+
+
