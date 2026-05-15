@@ -137,7 +137,7 @@
   }
 
   function pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight) {
-    var pageH = 297;
+    var pageH = 210; // A4 横向(landscape) 页高为 210mm，宽为 297mm
     var heightLeft = imgHeight;
     var position = 0;
     pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
