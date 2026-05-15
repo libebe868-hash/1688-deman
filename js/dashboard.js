@@ -1255,7 +1255,9 @@
     var years = {};
     allData.filter(function(d){
       return !selectedYear || String(d.date.getFullYear()) === selectedYear;
-    }).forEach(function (d) {inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0, dealCount: 0 };
+    }).forEach(function (d) {
+      var y = d.date.getFullYear();
+      if (!years[y]) years[y] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0, dealCount: 0 };
       var yr = years[y];
       yr.inquiries += d.inquiries;
       yr.reception += d.reception;
