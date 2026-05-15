@@ -729,7 +729,7 @@
       '.total-row td{background:#e6f0ff!important;font-weight:bold;color:#1a1a2e;}',
       '.pos{color:#0a7c3e;font-weight:bold;}',
       '.neg{color:#c0392b;font-weight:bold;}',
-      '.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0;}',
+      '.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0;}',
       '.kpi-box{border:1px solid #dde;border-radius:8px;padding:14px 10px;text-align:center;}',
       '.kpi-val{font-size:22px;font-weight:bold;color:#1a1a2e;}',
       '.kpi-lbl{font-size:11px;color:#777;margin-top:4px;}'
@@ -877,7 +877,9 @@
       '<td>—</td>' +
       '</tr>';
 
-    var rangeLabel = currentMonth ? currentMonth + ' 月' : '全部时间';
+    var rangeLabel = currentMonth ? currentMonth + ' 月（第' + weekKeys.map(function(wk){ return parseInt(wk.split('-W')[1],10); }).join('/') + '周）' : '全部时间';
+    var totalConvRate = totals.visitors > 0 ? ((totals.inquiries / totals.visitors) * 100).toFixed(2) + '%' : '—';
+    var totalRecRate  = totals.inquiries > 0 ? ((totals.reception / totals.inquiries) * 100).toFixed(2) + '%' : '—';
     if (!assertPdfLibs()) return;
 
     // ── 生成折线图1：周询盘 + 周接待 + 周访客 ──
@@ -944,10 +946,18 @@
       '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
       '<div class="rpt-meta"><span>统计范围：' + rangeLabel + '</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
       '<div class="kpi-grid">' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.totalExp.toLocaleString() + '</div><div class="kpi-lbl">总展现量</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.visitors.toLocaleString() + '</div><div class="kpi-lbl">总访客数</div></div>' +
       '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">总询盘数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.reception + '</div><div class="kpi-lbl">总接待数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalConvRate + '</div><div class="kpi-lbl">询盘转化率</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRecRate + '</div><div class="kpi-lbl">接待转化率</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.leads + '</div><div class="kpi-lbl">总线索数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalCpl + '</div><div class="kpi-lbl">单线索成本</div></div>' +
       '<div class="kpi-box"><div class="kpi-val">¥' + totals.adSpend.toFixed(0) + '</div><div class="kpi-lbl">总广告花费</div></div>' +
       '<div class="kpi-box"><div class="kpi-val">¥' + totals.deals.toLocaleString() + '</div><div class="kpi-lbl">总成交金额</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">总ROI</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">综合ROI</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + weekKeys.length + ' 周</div><div class="kpi-lbl">统计周数</div></div>' +
       '</div>' +
       chartSection('周询盘 · 接待 · 访客趋势', chart1Img) +
       chartSection('周广告花费 vs 成交金额', chart2Img) +
@@ -1116,16 +1126,27 @@
       }
     }, 1200, 320);
 
+    var mConvRate = totals.visitors > 0 ? ((totals.inquiries / totals.visitors) * 100).toFixed(2) + '%' : '—';
+    var mRecRate  = totals.inquiries > 0 ? ((totals.reception / totals.inquiries) * 100).toFixed(2) + '%' : '—';
+
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + '</style></head><body>' +
       '<div class="rpt-wrap">' +
       '<div class="rpt-title">📈 月度汇总报告</div>' +
       '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
-      '<div class="rpt-meta"><span>统计月份数：' + monthKeys.length + ' 个月</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
+      '<div class="rpt-meta"><span>统计月份：' + (monthKeys[0] || '') + ' 至 ' + (monthKeys[monthKeys.length-1] || '') + '（共 ' + monthKeys.length + ' 个月）</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
       '<div class="kpi-grid">' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">累计询盘</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.totalExp.toLocaleString() + '</div><div class="kpi-lbl">累计展现量</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.visitors.toLocaleString() + '</div><div class="kpi-lbl">累计访客数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">累计询盘数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.reception + '</div><div class="kpi-lbl">累计接待数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + mConvRate + '</div><div class="kpi-lbl">询盘转化率</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + mRecRate + '</div><div class="kpi-lbl">接待转化率</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.leads + '</div><div class="kpi-lbl">累计线索数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + (totals.leads > 0 ? '¥' + (totals.adSpend / totals.leads).toFixed(2) : '—') + '</div><div class="kpi-lbl">单线索成本</div></div>' +
       '<div class="kpi-box"><div class="kpi-val">¥' + totals.adSpend.toFixed(0) + '</div><div class="kpi-lbl">累计广告花费</div></div>' +
       '<div class="kpi-box"><div class="kpi-val">¥' + totals.deals.toLocaleString() + '</div><div class="kpi-lbl">累计成交金额</div></div>' +
       '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">综合ROI</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + monthKeys.length + ' 个月</div><div class="kpi-lbl">统计月数</div></div>' +
       '</div>' +
       chartSection('月度询盘 · 接待 · 访客趋势', chart3Img) +
       chartSection('月度广告花费（柱）& ROI趋势（折线）', chart4Img) +
