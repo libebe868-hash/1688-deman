@@ -1,0 +1,9 @@
+{
+  "dataJsonUrl": "",
+  "dataXlsxUrl": "data.xlsx",
+  "sheetName": "",
+  "parseWorkerMinBytes": 262144,
+  "workerScript": "workers/xlsx-worker.js",
+  "refetchOnMonthChange": false,
+  "initialFetchMonth": "all"
+}
