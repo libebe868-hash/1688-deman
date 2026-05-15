@@ -61,10 +61,10 @@ To resume this session in ANY AI tool:
 > 阿里巴巴 1688 店铺实时数据看板，支持 GitHub Pages 部署，只需更新 `data.xlsx` 即可刷新数据。 --- 点击右上角 **Fork**，克隆到你自己的账号。 仓库 → Settings → Pages → Source 选择 `main` 分支 / `/ (root)` 目录 → Save。 稍等 1~2 分钟后访问：`https://<你的用户名>.github.io/<仓库名>/` 将 **`data.xlsx`** 上传到仓库根目录，刷新页面即可。 --- | 列名（任选其一均可识别）| 说明 | |---|---| | 日期 / date | 格式：2025-01-01 或 Excel 日期格式 | | 总展现 / 展现量 / 曝光量 | 当日展现总数 | | 广告展现 / 广告曝光 | 广告展现数 | | 自然展现 / 自然曝光 | 自然展现数 | | 访客 / 访客数 | 当日访客数 | | 询盘 / 询盘数 / 商机 | 当日询盘数 | | 接待 / 接待数 / 接待人数 | 接待对话数 | | 广告花费 / 消耗 / 推广花费 | 当日广告消耗（元）|
 
 ## 🎯 Currently Working On (Last 30 min)
-- README.md
-- api\sample-dashboard.json
 - js\data-pipeline.js
+- api\sample-dashboard.json
 - config.json
+- README.md
 - js\dashboard.js
 - index.html
 
@@ -121,4 +121,4 @@ workers/
 - [ ] Recover any missed decisions before session ends
 
 ---
-Generated: 2026-05-15T01:58:33.485Z
+Generated: 2026-05-15T02:15:18.781Z

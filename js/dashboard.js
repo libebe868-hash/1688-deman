@@ -307,6 +307,11 @@
     applyViewMonth(month);
   }
 
+  function safeText(id, val) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
   function updateKpiDom(displayData, total) {
     var convRate = total.visitors > 0 ? total.inquiries / total.visitors * 100 : 0;
     var clickRate = total.totalExp > 0 ? total.visitors / total.totalExp * 100 : 0;
@@ -346,25 +351,27 @@
     var costPerLead = total.leads > 0 ? (total.adSpend / total.leads).toFixed(2) : '0';
     var totalDealCount = total.dealCount || 0;
 
-    document.getElementById('totalExp').textContent = total.totalExp.toLocaleString();
-    document.getElementById('totalVis').textContent = total.visitors.toLocaleString();
-    document.getElementById('totalInq').textContent = total.inquiries;
-    document.getElementById('totalRec').textContent = total.reception;
-    document.getElementById('convRate').textContent = convRate.toFixed(2) + '%';
-    document.getElementById('adRate').textContent =
-      total.totalExp > 0 ? ((total.adExp / total.totalExp) * 100).toFixed(1) + '%' : '0%';
-    document.getElementById('momInq').textContent = momInq;
-    document.getElementById('clickRate').textContent = clickRate.toFixed(2) + '%';
-    document.getElementById('totalAdSpend').textContent = total.adSpend.toFixed(2);
-    document.getElementById('totalLeads').textContent = total.leads;
-    document.getElementById('totalDeals').textContent = total.deals.toLocaleString();
-    document.getElementById('roi').textContent = roi;
-    document.getElementById('costPerLead').textContent = '¥' + costPerLead;
-    document.getElementById('receptionRate').textContent = receptionRate.toFixed(2) + '%';
-    document.getElementById('lastUpdate').textContent = new Date().toLocaleString('zh-CN');
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('stats').style.display = 'grid';
-    document.getElementById('charts').style.display = 'grid';
+    safeText('totalExp', total.totalExp.toLocaleString());
+    safeText('totalVis', total.visitors.toLocaleString());
+    safeText('totalInq', total.inquiries);
+    safeText('totalRec', total.reception);
+    safeText('convRate', convRate.toFixed(2) + '%');
+    safeText('adRate', total.totalExp > 0 ? ((total.adExp / total.totalExp) * 100).toFixed(1) + '%' : '0%');
+    safeText('momInq', momInq);
+    safeText('clickRate', clickRate.toFixed(2) + '%');
+    safeText('totalAdSpend', total.adSpend.toFixed(2));
+    safeText('totalLeads', total.leads);
+    safeText('totalDeals', total.deals.toLocaleString());
+    safeText('roi', roi);
+    safeText('costPerLead', '¥' + costPerLead);
+    safeText('receptionRate', receptionRate.toFixed(2) + '%');
+    safeText('lastUpdate', new Date().toLocaleString('zh-CN'));
+    var loadingEl2 = document.getElementById('loading');
+    if (loadingEl2) loadingEl2.style.display = 'none';
+    var statsEl = document.getElementById('stats');
+    if (statsEl) statsEl.style.display = 'grid';
+    var chartsEl = document.getElementById('charts');
+    if (chartsEl) chartsEl.style.display = 'grid';
   }
 
   function buildChart(chartId) {

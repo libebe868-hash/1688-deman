@@ -1,9 +1,10 @@
 {
-  "dataJsonUrl": "",
+  "dataJsonUrl": "api/sample-dashboard.json",
   "dataXlsxUrl": "data.xlsx",
   "sheetName": "",
   "parseWorkerMinBytes": 262144,
   "workerScript": "workers/xlsx-worker.js",
   "refetchOnMonthChange": false,
-  "initialFetchMonth": "all"
+  "initialFetchMonth": "all",
+  "_note": "有data.xlsx时将dataJsonUrl置空并将dataXlsxUrl设为data.xlsx；无xlsx则用JSON接口"
 }
