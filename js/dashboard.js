@@ -136,15 +136,99 @@
     return true;
   }
 
-  function pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight) {
-    // A4 横向: 宽297mm 高210mm
-    var pageH = 210;
-    var totalPages = Math.ceil(imgHeight / pageH);
-    for (var i = 0; i < totalPages; i++) {
-      if (i > 0) pdf.addPage();
-      // 将整张图片向上偏移，使当前页区域对齐到页面顶部
-      pdf.addImage(imgData, 'PNG', 0, -(i * pageH), imgWidth, imgHeight);
+  // 智能分页：在A4边界附近扫描空白行，避免切断图表或表格行
+  async function pdfSmartMultipage(pdf, canvas, pdfW, pdfH) {
+    var scale = canvas.width / pdfW;
+    var pageHpx = Math.round(pdfH * scale);
+    var totalHpx = canvas.height;
+    var W = canvas.width;
+    // 一次性读取全部像素
+    var fullData = canvas.getContext('2d').getImageData(0, 0, W, totalHpx).data;
+    function rowWhite(y) {
+      var nonWhite = 0;
+      var base = y * W * 4;
+      for (var xi = 0; xi < W; xi++) {
+        var i4 = base + xi * 4;
+        if (fullData[i4] < 235 || fullData[i4+1] < 235 || fullData[i4+2] < 235) nonWhite++;
+      }
+      return nonWhite / W < 0.05; // 少于5%非白像素视为空白行
     }
+    var pageStart = 0;
+    var pageNum = 0;
+    while (pageStart < totalHpx) {
+      var idealEnd = pageStart + pageHpx;
+      var pageEnd;
+      if (idealEnd >= totalHpx) {
+        pageEnd = totalHpx;
+      } else {
+        pageEnd = idealEnd;
+        // 向上最多扫描60mm找到空白行
+        var scanLimit = Math.max(pageStart + Math.round(pageHpx * 0.55), idealEnd - Math.round(scale * 60));
+        for (var sy = idealEnd; sy >= scanLimit; sy--) {
+          if (rowWhite(sy)) { pageEnd = sy; break; }
+        }
+      }
+      var sliceHpx = pageEnd - pageStart;
+      var tmpC = document.createElement('canvas');
+      tmpC.width = W;
+      tmpC.height = sliceHpx;
+      tmpC.getContext('2d').drawImage(canvas, 0, pageStart, W, sliceHpx, 0, 0, W, sliceHpx);
+      var slicePdfH = Math.ceil(sliceHpx / scale);
+      if (pageNum > 0) pdf.addPage();
+      pdf.addImage(tmpC.toDataURL('image/png'), 'PNG', 0, 0, pdfW, slicePdfH);
+      pageStart = pageEnd;
+      pageNum++;
+    }
+  }
+
+  // 通用多选对话框，返回 Promise<string[]|null>
+  function showPickerDialog(title, items) {
+    return new Promise(function(resolve) {
+      var dlg = document.createElement('div');
+      dlg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#fff;padding:24px 28px;border-radius:12px;min-width:300px;max-width:520px;max-height:78vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.3);font-family:Microsoft YaHei,Arial,sans-serif;color:#1a1a2e;';
+      var titleDiv = document.createElement('div');
+      titleDiv.style.cssText = 'font-size:17px;font-weight:bold;margin-bottom:12px;';
+      titleDiv.textContent = title;
+      box.appendChild(titleDiv);
+      var allRow = document.createElement('div');
+      allRow.style.cssText = 'margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #eee;';
+      var allLbl = document.createElement('label');
+      allLbl.style.cssText = 'cursor:pointer;font-size:13px;color:#555;display:flex;align-items:center;gap:6px;';
+      var allChk = document.createElement('input'); allChk.type='checkbox'; allChk.checked=true;
+      allLbl.appendChild(allChk); allLbl.appendChild(document.createTextNode('全选 / 全不选'));
+      allRow.appendChild(allLbl); box.appendChild(allRow);
+      var grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:18px;';
+      var cbs = [];
+      items.forEach(function(item) {
+        var lbl = document.createElement('label');
+        lbl.style.cssText = 'cursor:pointer;font-size:13px;padding:7px 10px;border:1px solid #dde;border-radius:6px;display:flex;align-items:center;gap:6px;background:#e8f0ff;';
+        var chk = document.createElement('input'); chk.type='checkbox'; chk.value=item; chk.checked=true;
+        chk.addEventListener('change', function() {
+          lbl.style.background = chk.checked ? '#e8f0ff' : '#f9f9f9';
+          allChk.checked = cbs.every(function(c){return c.checked;});
+          allChk.indeterminate = !allChk.checked && cbs.some(function(c){return c.checked;});
+        });
+        lbl.appendChild(chk); lbl.appendChild(document.createTextNode(item)); grid.appendChild(lbl); cbs.push(chk);
+      });
+      allChk.addEventListener('change', function() {
+        cbs.forEach(function(c){ c.checked=allChk.checked; c.parentElement.style.background=allChk.checked?'#e8f0ff':'#f9f9f9'; });
+      });
+      box.appendChild(grid);
+      var btnRow = document.createElement('div'); btnRow.style.cssText='display:flex;gap:12px;';
+      var btnOk = document.createElement('button'); btnOk.textContent='✅ 确认下载';
+      btnOk.style.cssText='flex:1;padding:10px;background:#1a1a2e;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
+      var btnCancel = document.createElement('button'); btnCancel.textContent='取消';
+      btnCancel.style.cssText='flex:1;padding:10px;background:#eee;color:#333;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
+      btnRow.appendChild(btnOk); btnRow.appendChild(btnCancel); box.appendChild(btnRow); dlg.appendChild(box); document.body.appendChild(dlg);
+      btnOk.onclick = function() {
+        var sel = cbs.filter(function(c){return c.checked;}).map(function(c){return c.value;});
+        document.body.removeChild(dlg); resolve(sel.length ? sel : null);
+      };
+      btnCancel.onclick = function() { document.body.removeChild(dlg); resolve(null); };
+    });
   }
 
   function showParseWarnings() {
@@ -1006,13 +1090,10 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var imgData = canvas.toDataURL('image/png');
-      var pdfW = 297; // A4横向宽度mm
-      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width); // 根据内容计算实际高度
-      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
+      await pdfSmartMultipage(pdf, canvas, 297, 210);
       pdf.save('周度汇总_' + (currentMonth || '全期') + '.pdf');
-      alert('✅ 周度汇总已下载（含趋势图 + 数据表）');
+      alert('✅ 周度汇总已下载（含趋势图 + 数据表，共' + pdf.getNumberOfPages() + '页）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
@@ -1021,8 +1102,24 @@
   }
 
   async function downloadMonthlySummary() {
+    // 收集所有可用月份供用户多选
+    var allMonths = [];
+    allData.forEach(function(d) {
+      var m = format(d.date, 'yyyy-MM');
+      if (allMonths.indexOf(m) === -1) allMonths.push(m);
+    });
+    allMonths.sort();
+    var selectedMonths = allMonths;
+    if (allMonths.length > 0) {
+      var picked = await showPickerDialog('📈 选择要下载的月份', allMonths);
+      if (!picked) return; // 用户取消
+      selectedMonths = picked;
+    }
+
     var months = {};
-    allData.forEach(function (d) {
+    allData.filter(function(d) {
+      return selectedMonths.indexOf(format(d.date, 'yyyy-MM')) !== -1;
+    }).forEach(function (d) {
       var m = format(d.date, 'yyyy-MM');
       if (!months[m]) months[m] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0 };
       months[m].inquiries += d.inquiries;
@@ -1195,13 +1292,10 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var imgData = canvas.toDataURL('image/png');
-      var pdfW = 297;
-      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
-      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save('月度汇总_' + new Date().getFullYear() + '.pdf');
-      alert('✅ 月度汇总已下载（含趋势图 + 数据表）');
+      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
+      await pdfSmartMultipage(pdf, canvas, 297, 210);
+      pdf.save('月度汇总_' + selectedMonths.join('_') + '.pdf');
+      alert('✅ 月度汇总已下载（' + selectedMonths.length + '个月，共' + pdf.getNumberOfPages() + '页）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
@@ -1217,44 +1311,17 @@
       if (availableYears.indexOf(y) === -1) availableYears.push(y);
     });
     availableYears.sort();
-    var selectedYear = null;
-    if (availableYears.length > 1) {
-      var optHtml = availableYears.map(function(y){ return '<option value="'+y+'">'+y+'年</option>'; }).join('');
-      var sel = document.createElement('select');
-      sel.innerHTML = '<option value="">-- 全部年份 --</option>' + optHtml;
-      sel.style.cssText = 'font-size:16px;padding:6px 12px;border-radius:6px;border:1px solid #ccc;margin:10px 0;width:100%;';
-      var dlg = document.createElement('div');
-      dlg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
-      var box = document.createElement('div');
-      box.style.cssText = 'background:#fff;padding:30px 36px;border-radius:12px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,.25);font-family:Microsoft YaHei,Arial;';
-      box.innerHTML = '<div style="font-size:18px;font-weight:bold;color:#1a1a2e;margin-bottom:14px;">📅 选择年度</div>';
-      box.appendChild(sel);
-      var btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display:flex;gap:12px;margin-top:16px;';
-      var btnOk = document.createElement('button');
-      btnOk.textContent = '确认下载';
-      btnOk.style.cssText = 'flex:1;padding:10px;background:#1a1a2e;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
-      var btnCancel = document.createElement('button');
-      btnCancel.textContent = '取消';
-      btnCancel.style.cssText = 'flex:1;padding:10px;background:#eee;color:#333;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
-      btnRow.appendChild(btnOk);
-      btnRow.appendChild(btnCancel);
-      box.appendChild(btnRow);
-      dlg.appendChild(box);
-      document.body.appendChild(dlg);
-      selectedYear = await new Promise(function(resolve) {
-        btnOk.onclick = function() { document.body.removeChild(dlg); resolve(sel.value || null); };
-        btnCancel.onclick = function() { document.body.removeChild(dlg); resolve(false); };
-      });
-      if (selectedYear === false) return; // 用户取消
-    } else if (availableYears.length === 1) {
-      selectedYear = availableYears[0];
+    var selectedYears = availableYears; // 默认全选
+    if (availableYears.length > 0) {
+      var picked = await showPickerDialog('📅 选择要下载的年度', availableYears);
+      if (!picked) return; // 用户取消
+      selectedYears = picked;
     }
 
     // 按年分组
     var years = {};
     allData.filter(function(d){
-      return !selectedYear || String(d.date.getFullYear()) === selectedYear;
+      return selectedYears.indexOf(String(d.date.getFullYear())) !== -1;
     }).forEach(function (d) {
       var y = d.date.getFullYear();
       if (!years[y]) years[y] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0, dealCount: 0 };
@@ -1275,7 +1342,7 @@
     // 同时按月汇总（用于月明细表）
     var monthMap = {};
     allData.filter(function(d){
-      return !selectedYear || String(d.date.getFullYear()) === selectedYear;
+      return selectedYears.indexOf(String(d.date.getFullYear())) !== -1;
     }).forEach(function (d) {
       var mk = format(d.date, 'yyyy-MM');
       if (!monthMap[mk]) monthMap[mk] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0 };
@@ -1337,7 +1404,7 @@
     });
 
     var totalAll = allData.filter(function(d){
-      return !selectedYear || String(d.date.getFullYear()) === selectedYear;
+      return selectedYears.indexOf(String(d.date.getFullYear())) !== -1;
     }).reduce(function (a, d) {
       return { inquiries: a.inquiries + d.inquiries, adSpend: a.adSpend + d.adSpend, deals: a.deals + d.deals, visitors: a.visitors + d.visitors, leads: a.leads + d.leads };
     }, { inquiries: 0, adSpend: 0, deals: 0, visitors: 0, leads: 0 });
@@ -1409,7 +1476,7 @@
     var extraStyles = ' h2{color:#1a1a2e;margin:24px 0 8px;font-size:16px;border-bottom:2px solid #1a1a2e;padding-bottom:4px;}';
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + extraStyles + '</style></head><body>' +
       '<div class="rpt-wrap">' +
-      '<div class="rpt-title">📊 年度汇总报告' + (selectedYear ? '（' + selectedYear + '年）' : '') + '</div>' +
+      '<div class="rpt-title">📊 年度汇总报告（' + selectedYears.join('、') + '年）</div>' +
       '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
       '<div class="rpt-meta"><span>数据跨度：' + (monthKeys2[0] || '—') + ' 至 ' + (monthKeys2[monthKeys2.length - 1] || '—') + '</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
       '<div class="kpi-grid">' +
@@ -1437,12 +1504,10 @@
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
       var imgData = canvas.toDataURL('image/png');
-      var pdfW = 297;
-      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
-      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-      pdf.save('年度汇总_' + (selectedYear || new Date().getFullYear()) + '.pdf');
-      alert('✅ 年度汇总已下载（含趋势图 + 年对比 + 月明细）');
+      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
+      await pdfSmartMultipage(pdf, canvas, 297, 210);
+      pdf.save('年度汇总_' + selectedYears.join('-') + '.pdf');
+      alert('✅ 年度汇总已下载（' + selectedYears.join('、') + '年，共' + pdf.getNumberOfPages() + '页）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
