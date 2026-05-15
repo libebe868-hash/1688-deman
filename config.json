@@ -1,5 +1,5 @@
 {
-  "dataJsonUrl": "api/sample-dashboard.json",
+  "dataJsonUrl": "",
   "dataXlsxUrl": "data.xlsx",
   "sheetName": "",
   "parseWorkerMinBytes": 262144,
