@@ -451,8 +451,8 @@
       new Chart(document.getElementById('weeklyChart'), {
         type: 'line',
         data: {
-          labels: weekKeys.map(function (wk, idx) {
-            return '第' + (idx + 1) + '周';
+          labels: weekKeys.map(function (wk) {
+            return '第' + parseInt(wk.split('-W')[1], 10) + '周';
           }),
           datasets: [
             { label: '周询盘', data: weekKeys.map(function (wk) {
@@ -840,8 +840,9 @@
       var dateRng = format(w.minDate, 'MM-dd') + '~' + format(w.maxDate, 'MM-dd');
       var roi = w.adSpend > 0 ? ((w.deals / w.adSpend) * 100).toFixed(1) + '%' : '—';
       var cpl = w.leads > 0 ? '¥' + (w.adSpend / w.leads).toFixed(2) : '—';
+      var weekNo = parseInt(wk.split('-W')[1], 10); // 2026年真实周号
       rows += '<tr>' +
-        '<td><b>第' + (i + 1) + '周</b></td>' +
+        '<td><b>第' + weekNo + '周</b></td>' +
         '<td>' + dateRng + '</td>' +
         '<td>' + w.totalExp.toLocaleString() + '</td>' +
         '<td>' + w.visitors.toLocaleString() + '</td>' +
@@ -880,7 +881,7 @@
     if (!assertPdfLibs()) return;
 
     // ── 生成折线图1：周询盘 + 周接待 + 周访客 ──
-    var wkLabels = weekKeys.map(function (w, idx) { return '第' + (idx + 1) + '周'; });
+    var wkLabels = weekKeys.map(function (wk) { return '第' + parseInt(wk.split('-W')[1], 10) + '周'; });
     var chart1Img = await renderChartToBase64({
       type: 'line',
       data: {
