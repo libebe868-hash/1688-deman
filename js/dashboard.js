@@ -48,11 +48,14 @@
     return date.toISOString().slice(0, 10);
   }
 
-  function getWeekNumber(date) {
-    var start = new Date(date.getFullYear(), 0, 1);
-    var diff = date - start + (start.getTimezoneOffset() - date.getTimezoneOffset()) * 60000;
-    var oneWeek = 86400000 * 7;
-    return Math.ceil(diff / oneWeek);
+  // 返回 ISO 8601 周键 "YYYY-Www"（周一为起始）
+  function getISOWeekKey(date) {
+    var d = new Date(date.getTime());
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+    var yearStart = new Date(d.getFullYear(), 0, 1);
+    var weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    return d.getFullYear() + '-W' + String(weekNo).padStart(2, '0');
   }
 
   function predictFuture(data, key, days) {
@@ -439,26 +442,24 @@
     if (chartId === 'weeklyChart') {
       var weeks = {};
       displayData.forEach(function (d) {
-        var week = getWeekNumber(d.date);
-        if (!weeks[week]) weeks[week] = { inquiries: 0, reception: 0 };
-        weeks[week].inquiries += d.inquiries;
-        weeks[week].reception += d.reception;
+        var wk = getISOWeekKey(d.date);
+        if (!weeks[wk]) weeks[wk] = { inquiries: 0, reception: 0 };
+        weeks[wk].inquiries += d.inquiries;
+        weeks[wk].reception += d.reception;
       });
-      var weekLabels = Object.keys(weeks).sort(function (a, b) {
-        return a - b;
-      });
+      var weekKeys = Object.keys(weeks).sort(); // ISO周键字符串天然排序
       new Chart(document.getElementById('weeklyChart'), {
         type: 'line',
         data: {
-          labels: weekLabels.map(function (w) {
-            return '第' + w + '周';
+          labels: weekKeys.map(function (wk, idx) {
+            return '第' + (idx + 1) + '周';
           }),
           datasets: [
-            { label: '周询盘', data: weekLabels.map(function (w) {
-              return weeks[w].inquiries;
+            { label: '周询盘', data: weekKeys.map(function (wk) {
+              return weeks[wk].inquiries;
             }), borderColor: '#ff00ff', tension: 0.4 },
-            { label: '周接待', data: weekLabels.map(function (w) {
-              return weeks[w].reception;
+            { label: '周接待', data: weekKeys.map(function (wk) {
+              return weeks[wk].reception;
             }), borderColor: '#00ffff', tension: 0.4 }
           ]
         },
@@ -742,10 +743,11 @@
 
   function momStr(cur, prev) {
     if (!prev) return cur > 0 ? '<span class="pos">+∞%</span>' : '—';
-    var r = ((cur / prev - 1) * 100).toFixed(1);
-    return r >= 0
-      ? '<span class="pos">▲' + r + '%</span>'
-      : '<span class="neg">▼' + Math.abs(r) + '%</span>';
+    var r = ((cur / prev - 1) * 100);
+    var rs = r.toFixed(1);
+    return parseFloat(rs) >= 0
+      ? '<span class="pos">▲' + rs + '%</span>'
+      : '<span class="neg">▼' + Math.abs(r).toFixed(1) + '%</span>';
   }
 
   // 在离屏canvas上渲染Chart.js图表，返回base64图片字符串
@@ -792,15 +794,15 @@
 
     var weeks = {};
     displayData.forEach(function (d) {
-      var week = getWeekNumber(d.date);
-      if (!weeks[week]) {
-        weeks[week] = {
+      var wk = getISOWeekKey(d.date);
+      if (!weeks[wk]) {
+        weeks[wk] = {
           inquiries: 0, reception: 0, visitors: 0, adSpend: 0,
           leads: 0, deals: 0, totalExp: 0, adExp: 0,
           minDate: d.date, maxDate: d.date
         };
       }
-      var w = weeks[week];
+      var w = weeks[wk];
       w.inquiries += d.inquiries;
       w.reception += d.reception;
       w.visitors += d.visitors;
@@ -813,7 +815,7 @@
       if (d.date > w.maxDate) w.maxDate = d.date;
     });
 
-    var weekKeys = Object.keys(weeks).sort(function (a, b) { return a - b; });
+    var weekKeys = Object.keys(weeks).sort(); // ISO周键字符串天然按时间排序
     var totals = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0 };
     weekKeys.forEach(function (wk) {
       var w = weeks[wk];
@@ -839,7 +841,7 @@
       var roi = w.adSpend > 0 ? ((w.deals / w.adSpend) * 100).toFixed(1) + '%' : '—';
       var cpl = w.leads > 0 ? '¥' + (w.adSpend / w.leads).toFixed(2) : '—';
       rows += '<tr>' +
-        '<td><b>第' + wk + '周</b></td>' +
+        '<td><b>第' + (i + 1) + '周</b></td>' +
         '<td>' + dateRng + '</td>' +
         '<td>' + w.totalExp.toLocaleString() + '</td>' +
         '<td>' + w.visitors.toLocaleString() + '</td>' +
@@ -878,7 +880,7 @@
     if (!assertPdfLibs()) return;
 
     // ── 生成折线图1：周询盘 + 周接待 + 周访客 ──
-    var wkLabels = weekKeys.map(function (w) { return '第' + w + '周'; });
+    var wkLabels = weekKeys.map(function (w, idx) { return '第' + (idx + 1) + '周'; });
     var chart1Img = await renderChartToBase64({
       type: 'line',
       data: {
