@@ -346,30 +346,6 @@
     var costPerLead = total.leads > 0 ? (total.adSpend / total.leads).toFixed(2) : '0';
     var totalDealCount = total.dealCount || 0;
 
-    var costPerDealNum;
-    var costPerDealSuffix = '';
-    if (totalDealCount > 0) {
-      costPerDealNum = (total.adSpend / totalDealCount).toFixed(2);
-      costPerDealSuffix = '（÷成交笔数）';
-    } else if (total.deals > 0) {
-      costPerDealNum = ((total.adSpend / total.deals) * 100).toFixed(2);
-      costPerDealSuffix = '% 广告÷成交金';
-    } else {
-      costPerDealNum = '0';
-    }
-
-    var avgDealNum;
-    var avgDealLbl = '平均成交金额';
-    if (totalDealCount > 0) {
-      avgDealNum = (total.deals / totalDealCount).toFixed(2);
-      avgDealLbl = '客单价(÷笔数)';
-    } else if (total.inquiries > 0 && total.deals > 0) {
-      avgDealNum = (total.deals / total.inquiries).toFixed(2);
-      avgDealLbl = '询盘产值(÷询盘)';
-    } else {
-      avgDealNum = '0';
-    }
-
     document.getElementById('totalExp').textContent = total.totalExp.toLocaleString();
     document.getElementById('totalVis').textContent = total.visitors.toLocaleString();
     document.getElementById('totalInq').textContent = total.inquiries;
@@ -384,15 +360,6 @@
     document.getElementById('totalDeals').textContent = total.deals.toLocaleString();
     document.getElementById('roi').textContent = roi;
     document.getElementById('costPerLead').textContent = '¥' + costPerLead;
-    var cpdEl = document.getElementById('costPerDeal');
-    cpdEl.textContent = totalDealCount > 0 ? '¥' + costPerDealNum : costPerDealNum + (total.deals > 0 ? '%' : '');
-    var cpdL = document.getElementById('costPerDealLabel');
-    if (cpdL) cpdL.textContent = '单成交成本' + costPerDealSuffix;
-
-    document.getElementById('avgDealValue').textContent = '¥' + avgDealNum;
-    var avL = document.getElementById('avgDealLabel');
-    if (avL) avL.textContent = avgDealLbl;
-
     document.getElementById('receptionRate').textContent = receptionRate.toFixed(2) + '%';
     document.getElementById('lastUpdate').textContent = new Date().toLocaleString('zh-CN');
     document.getElementById('loading').style.display = 'none';
@@ -739,72 +706,258 @@
     document.body.removeChild(a);
   }
 
+  function buildReportStyles() {
+    return [
+      'body{font-family:"Microsoft YaHei",Arial,sans-serif;color:#1a1a2e;background:#fff;margin:0;padding:20px;}',
+      '.rpt-wrap{max-width:960px;margin:0 auto;}',
+      '.rpt-title{text-align:center;font-size:22px;font-weight:bold;color:#1a1a2e;margin-bottom:4px;}',
+      '.rpt-subtitle{text-align:center;font-size:13px;color:#555;margin-bottom:18px;}',
+      '.rpt-meta{display:flex;justify-content:space-between;font-size:12px;color:#777;margin-bottom:10px;}',
+      'table{width:100%;border-collapse:collapse;font-size:13px;}',
+      'th{background:#1a1a2e;color:#fff;padding:9px 8px;text-align:center;white-space:nowrap;border:1px solid #334;}',
+      'td{padding:8px;text-align:center;border:1px solid #dde;white-space:nowrap;}',
+      'tr:nth-child(even) td{background:#f4f8ff;}',
+      'tr:hover td{background:#e8f0ff;}',
+      '.total-row td{background:#e6f0ff!important;font-weight:bold;color:#1a1a2e;}',
+      '.pos{color:#0a7c3e;font-weight:bold;}',
+      '.neg{color:#c0392b;font-weight:bold;}',
+      '.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0;}',
+      '.kpi-box{border:1px solid #dde;border-radius:8px;padding:14px 10px;text-align:center;}',
+      '.kpi-val{font-size:22px;font-weight:bold;color:#1a1a2e;}',
+      '.kpi-lbl{font-size:11px;color:#777;margin-top:4px;}'
+    ].join('');
+  }
+
+  function pct(a, b) {
+    if (!b) return '—';
+    return ((a / b) * 100).toFixed(2) + '%';
+  }
+
+  function momStr(cur, prev) {
+    if (!prev) return cur > 0 ? '<span class="pos">+∞%</span>' : '—';
+    var r = ((cur / prev - 1) * 100).toFixed(1);
+    return r >= 0
+      ? '<span class="pos">▲' + r + '%</span>'
+      : '<span class="neg">▼' + Math.abs(r) + '%</span>';
+  }
+
+  // 在离屏canvas上渲染Chart.js图表，返回base64图片字符串
+  function renderChartToBase64(config, w, h) {
+    return new Promise(function (resolve) {
+      var cvs = document.createElement('canvas');
+      cvs.width = w || 1100;
+      cvs.height = h || 300;
+      cvs.style.cssText = 'position:absolute;left:-30000px;top:0;';
+      document.body.appendChild(cvs);
+      // 关闭动画保证立即可截图
+      config.options = config.options || {};
+      config.options.animation = { duration: 0 };
+      config.options.responsive = false;
+      config.options.maintainAspectRatio = false;
+      var ch = new Chart(cvs, config);
+      setTimeout(function () {
+        var b64 = cvs.toDataURL('image/png');
+        ch.destroy();
+        document.body.removeChild(cvs);
+        resolve(b64);
+      }, 120);
+    });
+  }
+
+  // 公用折线图颜色方案
+  var CHART_PALETTE = {
+    blue:   { line: '#2563eb', fill: 'rgba(37,99,235,0.08)' },
+    pink:   { line: '#db2777', fill: 'rgba(219,39,119,0.08)' },
+    green:  { line: '#059669', fill: 'rgba(5,150,105,0.08)' },
+    orange: { line: '#d97706', fill: 'rgba(217,119,6,0.08)' },
+    purple: { line: '#7c3aed', fill: 'rgba(124,58,237,0.08)' }
+  };
+
+  function chartSection(title, imgSrc) {
+    return '<div style="margin:24px 0 8px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ ' + title + '</div>' +
+      '<img src="' + imgSrc + '" style="width:100%;border:1px solid #e0e0e0;border-radius:6px;display:block;" />';
+  }
+
   async function downloadWeeklySummary() {
     var displayData = currentMonth
-      ? allData.filter(function (d) {
-          return format(d.date, 'yyyy-MM') === currentMonth;
-        })
+      ? allData.filter(function (d) { return format(d.date, 'yyyy-MM') === currentMonth; })
       : allData;
+
     var weeks = {};
     displayData.forEach(function (d) {
       var week = getWeekNumber(d.date);
-      if (!weeks[week]) weeks[week] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0 };
-      weeks[week].inquiries += d.inquiries;
-      weeks[week].reception += d.reception;
-      weeks[week].visitors += d.visitors;
-      weeks[week].adSpend += d.adSpend;
-      weeks[week].leads += d.leads;
-      weeks[week].deals += d.deals;
+      if (!weeks[week]) {
+        weeks[week] = {
+          inquiries: 0, reception: 0, visitors: 0, adSpend: 0,
+          leads: 0, deals: 0, totalExp: 0, adExp: 0,
+          minDate: d.date, maxDate: d.date
+        };
+      }
+      var w = weeks[week];
+      w.inquiries += d.inquiries;
+      w.reception += d.reception;
+      w.visitors += d.visitors;
+      w.adSpend += d.adSpend;
+      w.leads += d.leads;
+      w.deals += d.deals;
+      w.totalExp += d.totalExp;
+      w.adExp += d.adExp;
+      if (d.date < w.minDate) w.minDate = d.date;
+      if (d.date > w.maxDate) w.maxDate = d.date;
     });
-    var htmlContent = '<h2 style="color:#00ffff; text-align:center;">📅 周度汇总报告</h2>';
-    htmlContent +=
-      '<p style="text-align:center; margin:10px 0;">范围: ' + (currentMonth ? currentMonth + ' 月' : '全部时间') + '</p>';
-    htmlContent += '<table style="width:100%; border-collapse:collapse; margin-top:20px;">';
-    htmlContent +=
-      '<tr style="background:#00ffff; color:#000;"><th style="border:1px solid #000; padding:10px;">周号</th><th style="border:1px solid #000; padding:10px;">询盘数</th><th style="border:1px solid #000; padding:10px;">接待数</th><th style="border:1px solid #000; padding:10px;">访客数</th><th style="border:1px solid #000; padding:10px;">广告花费</th><th style="border:1px solid #000; padding:10px;">成交金额</th></tr>';
-    Object.keys(weeks)
-      .sort(function (a, b) {
-        return a - b;
-      })
-      .forEach(function (week) {
-        var w = weeks[week];
-        htmlContent +=
-          '<tr><td style="border:1px solid #000; padding:10px;">第' +
-          week +
-          '周</td><td style="border:1px solid #000; padding:10px;">' +
-          w.inquiries +
-          '</td><td style="border:1px solid #000; padding:10px;">' +
-          w.reception +
-          '</td><td style="border:1px solid #000; padding:10px;">' +
-          w.visitors +
-          '</td><td style="border:1px solid #000; padding:10px;">¥' +
-          w.adSpend.toFixed(2) +
-          '</td><td style="border:1px solid #000; padding:10px;">¥' +
-          w.deals.toLocaleString() +
-          '</td></tr>';
-      });
-    htmlContent += '</table>';
+
+    var weekKeys = Object.keys(weeks).sort(function (a, b) { return a - b; });
+    var totals = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0 };
+    weekKeys.forEach(function (wk) {
+      var w = weeks[wk];
+      totals.inquiries += w.inquiries;
+      totals.reception += w.reception;
+      totals.visitors += w.visitors;
+      totals.adSpend += w.adSpend;
+      totals.leads += w.leads;
+      totals.deals += w.deals;
+      totals.totalExp += w.totalExp;
+    });
+
+    var styles = buildReportStyles();
+    var cols = ['周号', '日期范围', '展现量', '访客数', '询盘数', '接待数', '询盘转化率', '接待转化率',
+                '广告花费', '线索数', '单线索成本', '成交金额', 'ROI', '周询盘环比'];
+    var thRow = cols.map(function (c) { return '<th>' + c + '</th>'; }).join('');
+
+    var rows = '';
+    weekKeys.forEach(function (wk, i) {
+      var w = weeks[wk];
+      var prev = i > 0 ? weeks[weekKeys[i - 1]] : null;
+      var dateRng = format(w.minDate, 'MM-dd') + '~' + format(w.maxDate, 'MM-dd');
+      var roi = w.adSpend > 0 ? ((w.deals / w.adSpend) * 100).toFixed(1) + '%' : '—';
+      var cpl = w.leads > 0 ? '¥' + (w.adSpend / w.leads).toFixed(2) : '—';
+      rows += '<tr>' +
+        '<td><b>第' + wk + '周</b></td>' +
+        '<td>' + dateRng + '</td>' +
+        '<td>' + w.totalExp.toLocaleString() + '</td>' +
+        '<td>' + w.visitors.toLocaleString() + '</td>' +
+        '<td><b>' + w.inquiries + '</b></td>' +
+        '<td>' + w.reception + '</td>' +
+        '<td>' + pct(w.inquiries, w.visitors) + '</td>' +
+        '<td>' + pct(w.reception, w.inquiries) + '</td>' +
+        '<td>¥' + w.adSpend.toFixed(2) + '</td>' +
+        '<td>' + w.leads + '</td>' +
+        '<td>' + cpl + '</td>' +
+        '<td>¥' + w.deals.toLocaleString() + '</td>' +
+        '<td>' + roi + '</td>' +
+        '<td>' + (prev ? momStr(w.inquiries, prev.inquiries) : '—') + '</td>' +
+        '</tr>';
+    });
+
+    var totalRoi = totals.adSpend > 0 ? ((totals.deals / totals.adSpend) * 100).toFixed(1) + '%' : '—';
+    var totalCpl = totals.leads > 0 ? '¥' + (totals.adSpend / totals.leads).toFixed(2) : '—';
+    rows += '<tr class="total-row">' +
+      '<td colspan="2"><b>合 计</b></td>' +
+      '<td>' + totals.totalExp.toLocaleString() + '</td>' +
+      '<td>' + totals.visitors.toLocaleString() + '</td>' +
+      '<td><b>' + totals.inquiries + '</b></td>' +
+      '<td>' + totals.reception + '</td>' +
+      '<td>' + pct(totals.inquiries, totals.visitors) + '</td>' +
+      '<td>' + pct(totals.reception, totals.inquiries) + '</td>' +
+      '<td>¥' + totals.adSpend.toFixed(2) + '</td>' +
+      '<td>' + totals.leads + '</td>' +
+      '<td>' + totalCpl + '</td>' +
+      '<td>¥' + totals.deals.toLocaleString() + '</td>' +
+      '<td>' + totalRoi + '</td>' +
+      '<td>—</td>' +
+      '</tr>';
+
+    var rangeLabel = currentMonth ? currentMonth + ' 月' : '全部时间';
+    if (!assertPdfLibs()) return;
+
+    // ── 生成折线图1：周询盘 + 周接待 + 周访客 ──
+    var wkLabels = weekKeys.map(function (w) { return '第' + w + '周'; });
+    var chart1Img = await renderChartToBase64({
+      type: 'line',
+      data: {
+        labels: wkLabels,
+        datasets: [
+          { label: '询盘数', data: weekKeys.map(function(w){ return weeks[w].inquiries; }),
+            borderColor: CHART_PALETTE.blue.line, backgroundColor: CHART_PALETTE.blue.fill,
+            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.blue.line, fill: true, tension: 0.35, yAxisID: 'y' },
+          { label: '接待数', data: weekKeys.map(function(w){ return weeks[w].reception; }),
+            borderColor: CHART_PALETTE.green.line, backgroundColor: CHART_PALETTE.green.fill,
+            borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.green.line, fill: false, tension: 0.35, yAxisID: 'y' },
+          { label: '访客数', data: weekKeys.map(function(w){ return weeks[w].visitors; }),
+            borderColor: CHART_PALETTE.purple.line, backgroundColor: CHART_PALETTE.purple.fill,
+            borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.purple.line, fill: false, tension: 0.35, yAxisID: 'y1',
+            borderDash: [5, 3] }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#1a1a2e', font: { size: 13 } } },
+          datalabels: { color: '#1a1a2e', anchor: 'end', align: 'top', font: { size: 11 },
+            formatter: function(v, ctx) { return ctx.dataset.yAxisID === 'y1' ? '' : v; } }
+        },
+        scales: {
+          y:  { position: 'left',  title: { display: true, text: '询盘 / 接待', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '访客数', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+        }
+      }
+    }, 1120, 310);
+
+    // ── 生成折线图2：广告花费 vs 成交金额 ──
+    var chart2Img = await renderChartToBase64({
+      type: 'line',
+      data: {
+        labels: wkLabels,
+        datasets: [
+          { label: '广告花费(¥)', data: weekKeys.map(function(w){ return weeks[w].adSpend; }),
+            borderColor: CHART_PALETTE.orange.line, backgroundColor: CHART_PALETTE.orange.fill,
+            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.orange.line, fill: true, tension: 0.35, yAxisID: 'y' },
+          { label: '成交金额(¥)', data: weekKeys.map(function(w){ return weeks[w].deals; }),
+            borderColor: CHART_PALETTE.pink.line, backgroundColor: CHART_PALETTE.pink.fill,
+            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.pink.line, fill: false, tension: 0.35, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#1a1a2e', font: { size: 13 } } },
+          datalabels: { display: false }
+        },
+        scales: {
+          y:  { position: 'left',  title: { display: true, text: '广告花费(¥)', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '成交金额(¥)', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+        }
+      }
+    }, 1120, 310);
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + '</style></head><body>' +
+      '<div class="rpt-wrap">' +
+      '<div class="rpt-title">📊 周度汇总报告</div>' +
+      '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
+      '<div class="rpt-meta"><span>统计范围：' + rangeLabel + '</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
+      '<div class="kpi-grid">' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">总询盘数</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">¥' + totals.adSpend.toFixed(0) + '</div><div class="kpi-lbl">总广告花费</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">¥' + totals.deals.toLocaleString() + '</div><div class="kpi-lbl">总成交金额</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">总ROI</div></div>' +
+      '</div>' +
+      chartSection('周询盘 · 接待 · 访客趋势', chart1Img) +
+      chartSection('周广告花费 vs 成交金额', chart2Img) +
+      '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ 周度明细数据</div>' +
+      '<table><thead><tr>' + thRow + '</tr></thead><tbody>' + rows + '</tbody></table>' +
+      '</div></body></html>';
+
     var tempContainer = document.createElement('div');
-    tempContainer.innerHTML = htmlContent;
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-10000px';
-    tempContainer.style.background = 'white';
-    tempContainer.style.padding = '20px';
-    tempContainer.style.color = '#000';
+    tempContainer.innerHTML = html;
+    tempContainer.style.cssText = 'position:absolute;left:-10000px;background:white;padding:20px;color:#000;width:1200px;';
     document.body.appendChild(tempContainer);
-    if (!assertPdfLibs()) {
-      document.body.removeChild(tempContainer);
-      return;
-    }
     try {
-      var canvas = await html2canvas(tempContainer, html2canvasPdfOptions());
-      var pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+      var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
+      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
       var imgData = canvas.toDataURL('image/png');
-      var imgWidth = 210;
+      var imgWidth = 297;
       var imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight);
-      pdf.save('周汇总_' + (currentMonth || '全期') + '.pdf');
-      alert('周汇总已下载');
+      pdf.save('周度汇总_' + (currentMonth || '全期') + '.pdf');
+      alert('✅ 周度汇总已下载（含趋势图 + 数据表）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
@@ -816,59 +969,173 @@
     var months = {};
     allData.forEach(function (d) {
       var m = format(d.date, 'yyyy-MM');
-      if (!months[m]) months[m] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0 };
+      if (!months[m]) months[m] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0 };
       months[m].inquiries += d.inquiries;
       months[m].reception += d.reception;
       months[m].visitors += d.visitors;
       months[m].adSpend += d.adSpend;
       months[m].leads += d.leads;
       months[m].deals += d.deals;
+      months[m].totalExp += d.totalExp;
+      months[m].adExp += d.adExp;
     });
-    var htmlContent = '<h2 style="color:#00ffff; text-align:center;">📈 月度汇总报告</h2>';
-    htmlContent += '<table style="width:100%; border-collapse:collapse; margin-top:20px;">';
-    htmlContent +=
-      '<tr style="background:#00ffff; color:#000;"><th style="border:1px solid #000; padding:10px;">月份</th><th style="border:1px solid #000; padding:10px;">询盘数</th><th style="border:1px solid #000; padding:10px;">接待数</th><th style="border:1px solid #000; padding:10px;">访客数</th><th style="border:1px solid #000; padding:10px;">广告花费</th><th style="border:1px solid #000; padding:10px;">成交金额</th></tr>';
-    Object.keys(months)
-      .sort()
-      .forEach(function (month) {
-        var mm = months[month];
-        htmlContent +=
-          '<tr><td style="border:1px solid #000; padding:10px;">' +
-          month +
-          '</td><td style="border:1px solid #000; padding:10px;">' +
-          mm.inquiries +
-          '</td><td style="border:1px solid #000; padding:10px;">' +
-          mm.reception +
-          '</td><td style="border:1px solid #000; padding:10px;">' +
-          mm.visitors +
-          '</td><td style="border:1px solid #000; padding:10px;">¥' +
-          mm.adSpend.toFixed(2) +
-          '</td><td style="border:1px solid #000; padding:10px;">¥' +
-          mm.deals.toLocaleString() +
-          '</td></tr>';
-      });
-    htmlContent += '</table>';
+
+    var monthKeys = Object.keys(months).sort();
+    var totals = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0 };
+    monthKeys.forEach(function (mk) {
+      var m = months[mk];
+      totals.inquiries += m.inquiries;
+      totals.reception += m.reception;
+      totals.visitors += m.visitors;
+      totals.adSpend += m.adSpend;
+      totals.leads += m.leads;
+      totals.deals += m.deals;
+      totals.totalExp += m.totalExp;
+    });
+
+    var styles = buildReportStyles();
+    var cols = ['月份', '展现量', '访客数', '询盘数', '接待数', '询盘转化率', '接待转化率',
+                '广告花费', '广告占比', '线索数', '单线索成本', '成交金额', 'ROI', '月询盘环比'];
+    var thRow = cols.map(function (c) { return '<th>' + c + '</th>'; }).join('');
+
+    var rows = '';
+    monthKeys.forEach(function (mk, i) {
+      var m = months[mk];
+      var prev = i > 0 ? months[monthKeys[i - 1]] : null;
+      var roi = m.adSpend > 0 ? ((m.deals / m.adSpend) * 100).toFixed(1) + '%' : '—';
+      var cpl = m.leads > 0 ? '¥' + (m.adSpend / m.leads).toFixed(2) : '—';
+      var adPct = m.totalExp > 0 ? ((m.adExp / m.totalExp) * 100).toFixed(1) + '%' : '—';
+      rows += '<tr>' +
+        '<td><b>' + mk + '</b></td>' +
+        '<td>' + m.totalExp.toLocaleString() + '</td>' +
+        '<td>' + m.visitors.toLocaleString() + '</td>' +
+        '<td><b>' + m.inquiries + '</b></td>' +
+        '<td>' + m.reception + '</td>' +
+        '<td>' + pct(m.inquiries, m.visitors) + '</td>' +
+        '<td>' + pct(m.reception, m.inquiries) + '</td>' +
+        '<td>¥' + m.adSpend.toFixed(2) + '</td>' +
+        '<td>' + adPct + '</td>' +
+        '<td>' + m.leads + '</td>' +
+        '<td>' + cpl + '</td>' +
+        '<td>¥' + m.deals.toLocaleString() + '</td>' +
+        '<td>' + roi + '</td>' +
+        '<td>' + (prev ? momStr(m.inquiries, prev.inquiries) : '—') + '</td>' +
+        '</tr>';
+    });
+
+    var totalRoi = totals.adSpend > 0 ? ((totals.deals / totals.adSpend) * 100).toFixed(1) + '%' : '—';
+    var totalCpl = totals.leads > 0 ? '¥' + (totals.adSpend / totals.leads).toFixed(2) : '—';
+    rows += '<tr class="total-row">' +
+      '<td><b>合 计</b></td>' +
+      '<td>' + totals.totalExp.toLocaleString() + '</td>' +
+      '<td>' + totals.visitors.toLocaleString() + '</td>' +
+      '<td><b>' + totals.inquiries + '</b></td>' +
+      '<td>' + totals.reception + '</td>' +
+      '<td>' + pct(totals.inquiries, totals.visitors) + '</td>' +
+      '<td>' + pct(totals.reception, totals.inquiries) + '</td>' +
+      '<td>¥' + totals.adSpend.toFixed(2) + '</td>' +
+      '<td>—</td>' +
+      '<td>' + totals.leads + '</td>' +
+      '<td>' + totalCpl + '</td>' +
+      '<td>¥' + totals.deals.toLocaleString() + '</td>' +
+      '<td>' + totalRoi + '</td>' +
+      '<td>—</td>' +
+      '</tr>';
+
+    if (!assertPdfLibs()) return;
+
+    // ── 生成折线图1：月度询盘 + 接待 + 访客 ──
+    var chart3Img = await renderChartToBase64({
+      type: 'line',
+      data: {
+        labels: monthKeys,
+        datasets: [
+          { label: '询盘数', data: monthKeys.map(function(m){ return months[m].inquiries; }),
+            borderColor: CHART_PALETTE.blue.line, backgroundColor: CHART_PALETTE.blue.fill,
+            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.blue.line, fill: true, tension: 0.4, yAxisID: 'y' },
+          { label: '接待数', data: monthKeys.map(function(m){ return months[m].reception; }),
+            borderColor: CHART_PALETTE.green.line, backgroundColor: CHART_PALETTE.green.fill,
+            borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.green.line, fill: false, tension: 0.4, yAxisID: 'y' },
+          { label: '访客数', data: monthKeys.map(function(m){ return months[m].visitors; }),
+            borderColor: CHART_PALETTE.purple.line, borderWidth: 2, pointRadius: 4,
+            pointBackgroundColor: CHART_PALETTE.purple.line, fill: false, tension: 0.4, yAxisID: 'y1', borderDash: [5, 3] }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#1a1a2e', font: { size: 13 } } },
+          datalabels: { color: '#1a1a2e', anchor: 'end', align: 'top', font: { size: 11 },
+            formatter: function(v, ctx) { return ctx.dataset.yAxisID === 'y1' ? '' : v; } }
+        },
+        scales: {
+          y:  { position: 'left',  title: { display: true, text: '询盘 / 接待', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '访客数', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+        }
+      }
+    }, 1200, 320);
+
+    // ── 生成折线图2：广告花费(柱) + ROI(线) ──
+    var roiData = monthKeys.map(function(m) {
+      var mo = months[m];
+      return mo.adSpend > 0 ? parseFloat(((mo.deals / mo.adSpend) * 100).toFixed(1)) : 0;
+    });
+    var chart4Img = await renderChartToBase64({
+      type: 'bar',
+      data: {
+        labels: monthKeys,
+        datasets: [
+          { type: 'bar', label: '广告花费(¥)',
+            data: monthKeys.map(function(m){ return months[m].adSpend; }),
+            backgroundColor: 'rgba(217,119,6,0.65)', borderColor: CHART_PALETTE.orange.line, borderWidth: 1.5, yAxisID: 'y' },
+          { type: 'line', label: 'ROI(%)',
+            data: roiData,
+            borderColor: CHART_PALETTE.pink.line, backgroundColor: 'transparent',
+            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.pink.line,
+            tension: 0.4, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#1a1a2e', font: { size: 13 } } },
+          datalabels: { display: false }
+        },
+        scales: {
+          y:  { position: 'left',  title: { display: true, text: '广告花费(¥)', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: 'ROI(%)', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+        }
+      }
+    }, 1200, 320);
+
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + '</style></head><body>' +
+      '<div class="rpt-wrap">' +
+      '<div class="rpt-title">📈 月度汇总报告</div>' +
+      '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
+      '<div class="rpt-meta"><span>统计月份数：' + monthKeys.length + ' 个月</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
+      '<div class="kpi-grid">' +
+      '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">累计询盘</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">¥' + totals.adSpend.toFixed(0) + '</div><div class="kpi-lbl">累计广告花费</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">¥' + totals.deals.toLocaleString() + '</div><div class="kpi-lbl">累计成交金额</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">综合ROI</div></div>' +
+      '</div>' +
+      chartSection('月度询盘 · 接待 · 访客趋势', chart3Img) +
+      chartSection('月度广告花费（柱）& ROI趋势（折线）', chart4Img) +
+      '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ 月度明细数据</div>' +
+      '<table><thead><tr>' + thRow + '</tr></thead><tbody>' + rows + '</tbody></table>' +
+      '</div></body></html>';
+
     var tempContainer = document.createElement('div');
-    tempContainer.innerHTML = htmlContent;
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-10000px';
-    tempContainer.style.background = 'white';
-    tempContainer.style.padding = '20px';
-    tempContainer.style.color = '#000';
+    tempContainer.innerHTML = html;
+    tempContainer.style.cssText = 'position:absolute;left:-10000px;background:white;padding:20px;color:#000;width:1300px;';
     document.body.appendChild(tempContainer);
-    if (!assertPdfLibs()) {
-      document.body.removeChild(tempContainer);
-      return;
-    }
     try {
-      var canvas = await html2canvas(tempContainer, html2canvasPdfOptions());
-      var pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+      var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
+      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
       var imgData = canvas.toDataURL('image/png');
-      var imgWidth = 210;
+      var imgWidth = 297;
       var imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight);
-      pdf.save('月汇总_' + new Date().getFullYear() + '.pdf');
-      alert('月汇总已下载');
+      pdf.save('月度汇总_' + new Date().getFullYear() + '.pdf');
+      alert('✅ 月度汇总已下载（含趋势图 + 数据表）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
@@ -877,84 +1144,192 @@
   }
 
   async function downloadAnnualSummary() {
-    var annualTotal = allData.reduce(
-      function (acc, d) {
-        return {
-          totalExp: acc.totalExp + d.totalExp,
-          visitors: acc.visitors + d.visitors,
-          inquiries: acc.inquiries + d.inquiries,
-          reception: acc.reception + d.reception,
-          adSpend: acc.adSpend + d.adSpend,
-          leads: acc.leads + d.leads,
-          deals: acc.deals + d.deals,
-          dealCount: acc.dealCount + (d.dealCount || 0),
-          adExp: acc.adExp + d.adExp,
-          naturalExp: acc.naturalExp + d.naturalExp
-        };
-      },
-      {
-        totalExp: 0,
-        visitors: 0,
-        inquiries: 0,
-        reception: 0,
-        adSpend: 0,
-        leads: 0,
-        deals: 0,
-        dealCount: 0,
-        adExp: 0,
-        naturalExp: 0
-      }
-    );
-    var convRate = annualTotal.visitors > 0 ? ((annualTotal.inquiries / annualTotal.visitors) * 100).toFixed(2) : 0;
-    var roi = annualTotal.adSpend > 0 ? ((annualTotal.deals / annualTotal.adSpend) * 100).toFixed(2) : 0;
-    var htmlContent = '<h2 style="color:#00ffff; text-align:center;">📊 年度汇总报告</h2>';
-    htmlContent += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px;">';
-    var items = [
-      { label: '总展现量', value: annualTotal.totalExp.toLocaleString() },
-      { label: '总访客数', value: annualTotal.visitors.toLocaleString() },
-      { label: '询盘总数', value: annualTotal.inquiries },
-      { label: '接待总数', value: annualTotal.reception },
-      { label: '转化率', value: convRate + '%' },
-      { label: '广告花费', value: '¥' + annualTotal.adSpend.toFixed(2) },
-      { label: '总线索', value: annualTotal.leads },
-      { label: '成交金额', value: '¥' + annualTotal.deals.toLocaleString() }
-    ];
-    if (annualTotal.dealCount > 0) {
-      items.push({ label: '成交笔数', value: annualTotal.dealCount });
-    }
-    items.push({ label: 'ROI', value: roi + '%' });
-    items.forEach(function (item) {
-      htmlContent +=
-        '<div style="border:1px solid #000; padding:15px; background:#f5f5f5;">' +
-        '<div style="color:#666; font-size:12px;">' +
-        item.label +
-        '</div>' +
-        '<div style="color:#000; font-size:20px; font-weight:bold;">' +
-        item.value +
-        '</div></div>';
+    // 按年分组
+    var years = {};
+    allData.forEach(function (d) {
+      var y = d.date.getFullYear();
+      if (!years[y]) years[y] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0, dealCount: 0 };
+      var yr = years[y];
+      yr.inquiries += d.inquiries;
+      yr.reception += d.reception;
+      yr.visitors += d.visitors;
+      yr.adSpend += d.adSpend;
+      yr.leads += d.leads;
+      yr.deals += d.deals;
+      yr.totalExp += d.totalExp;
+      yr.adExp += d.adExp;
+      yr.dealCount += (d.dealCount || 0);
     });
-    htmlContent += '</div>';
+
+    var yearKeys = Object.keys(years).sort();
+
+    // 同时按月汇总（用于月明细表）
+    var monthMap = {};
+    allData.forEach(function (d) {
+      var mk = format(d.date, 'yyyy-MM');
+      if (!monthMap[mk]) monthMap[mk] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0 };
+      monthMap[mk].inquiries += d.inquiries;
+      monthMap[mk].reception += d.reception;
+      monthMap[mk].visitors += d.visitors;
+      monthMap[mk].adSpend += d.adSpend;
+      monthMap[mk].leads += d.leads;
+      monthMap[mk].deals += d.deals;
+      monthMap[mk].totalExp += d.totalExp;
+    });
+
+    var styles = buildReportStyles();
+
+    // 年度核心指标表
+    var yearRows = '';
+    yearKeys.forEach(function (yk, i) {
+      var y = years[yk];
+      var prev = i > 0 ? years[yearKeys[i - 1]] : null;
+      var roi = y.adSpend > 0 ? ((y.deals / y.adSpend) * 100).toFixed(1) + '%' : '—';
+      var cpl = y.leads > 0 ? '¥' + (y.adSpend / y.leads).toFixed(2) : '—';
+      yearRows += '<tr>' +
+        '<td><b>' + yk + '年</b></td>' +
+        '<td>' + y.totalExp.toLocaleString() + '</td>' +
+        '<td>' + y.visitors.toLocaleString() + '</td>' +
+        '<td><b>' + y.inquiries + '</b></td>' +
+        '<td>' + y.reception + '</td>' +
+        '<td>' + pct(y.inquiries, y.visitors) + '</td>' +
+        '<td>' + pct(y.reception, y.inquiries) + '</td>' +
+        '<td>¥' + y.adSpend.toFixed(2) + '</td>' +
+        '<td>' + y.leads + '</td>' +
+        '<td>' + cpl + '</td>' +
+        '<td>¥' + y.deals.toLocaleString() + '</td>' +
+        '<td>' + (y.dealCount > 0 ? y.dealCount : '—') + '</td>' +
+        '<td>' + roi + '</td>' +
+        '<td>' + (prev ? momStr(y.inquiries, prev.inquiries) : '—') + '</td>' +
+        '</tr>';
+    });
+
+    // 月明细表
+    var monthKeys2 = Object.keys(monthMap).sort();
+    var monthRows = '';
+    monthKeys2.forEach(function (mk, i) {
+      var m = monthMap[mk];
+      var prev = i > 0 ? monthMap[monthKeys2[i - 1]] : null;
+      var roi = m.adSpend > 0 ? ((m.deals / m.adSpend) * 100).toFixed(1) + '%' : '—';
+      monthRows += '<tr>' +
+        '<td><b>' + mk + '</b></td>' +
+        '<td>' + m.visitors.toLocaleString() + '</td>' +
+        '<td><b>' + m.inquiries + '</b></td>' +
+        '<td>' + m.reception + '</td>' +
+        '<td>' + pct(m.inquiries, m.visitors) + '</td>' +
+        '<td>¥' + m.adSpend.toFixed(2) + '</td>' +
+        '<td>' + m.leads + '</td>' +
+        '<td>¥' + m.deals.toLocaleString() + '</td>' +
+        '<td>' + roi + '</td>' +
+        '<td>' + (prev ? momStr(m.inquiries, prev.inquiries) : '—') + '</td>' +
+        '</tr>';
+    });
+
+    var totalAll = allData.reduce(function (a, d) {
+      return { inquiries: a.inquiries + d.inquiries, adSpend: a.adSpend + d.adSpend, deals: a.deals + d.deals, visitors: a.visitors + d.visitors, leads: a.leads + d.leads };
+    }, { inquiries: 0, adSpend: 0, deals: 0, visitors: 0, leads: 0 });
+    var totalRoi = totalAll.adSpend > 0 ? ((totalAll.deals / totalAll.adSpend) * 100).toFixed(1) + '%' : '—';
+
+    if (!assertPdfLibs()) return;
+
+    // ── 折线图1：月度询盘 + 成交金额双轴趋势 ──
+    var chart5Img = await renderChartToBase64({
+      type: 'line',
+      data: {
+        labels: monthKeys2,
+        datasets: [
+          { label: '月询盘', data: monthKeys2.map(function(m){ return monthMap[m].inquiries; }),
+            borderColor: CHART_PALETTE.blue.line, backgroundColor: CHART_PALETTE.blue.fill,
+            borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.blue.line,
+            fill: true, tension: 0.4, yAxisID: 'y' },
+          { label: '成交金额(¥)', data: monthKeys2.map(function(m){ return monthMap[m].deals; }),
+            borderColor: CHART_PALETTE.pink.line, backgroundColor: 'transparent',
+            borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.pink.line,
+            fill: false, tension: 0.4, yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#1a1a2e', font: { size: 13 } } },
+          datalabels: { color: '#1a1a2e', anchor: 'end', align: 'top', font: { size: 10 },
+            formatter: function(v, ctx) { return ctx.dataset.yAxisID === 'y1' ? '' : v; } }
+        },
+        scales: {
+          y:  { position: 'left',  title: { display: true, text: '月询盘数', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '成交金额(¥)', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+        }
+      }
+    }, 1200, 300);
+
+    // ── 折线图2：月度广告花费 + 访客 + 线索 ──
+    var chart6Img = await renderChartToBase64({
+      type: 'line',
+      data: {
+        labels: monthKeys2,
+        datasets: [
+          { label: '广告花费(¥)', data: monthKeys2.map(function(m){ return monthMap[m].adSpend; }),
+            borderColor: CHART_PALETTE.orange.line, backgroundColor: CHART_PALETTE.orange.fill,
+            borderWidth: 2.5, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.orange.line,
+            fill: true, tension: 0.4, yAxisID: 'y' },
+          { label: '访客数', data: monthKeys2.map(function(m){ return monthMap[m].visitors; }),
+            borderColor: CHART_PALETTE.purple.line, backgroundColor: 'transparent',
+            borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.purple.line,
+            fill: false, tension: 0.4, yAxisID: 'y1', borderDash: [5, 3] },
+          { label: '线索数', data: monthKeys2.map(function(m){ return monthMap[m].leads; }),
+            borderColor: CHART_PALETTE.green.line, backgroundColor: 'transparent',
+            borderWidth: 2, pointRadius: 4, pointBackgroundColor: CHART_PALETTE.green.line,
+            fill: false, tension: 0.4, yAxisID: 'y' }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: { labels: { color: '#1a1a2e', font: { size: 13 } } },
+          datalabels: { display: false }
+        },
+        scales: {
+          y:  { position: 'left',  title: { display: true, text: '花费(¥) / 线索', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
+          y1: { position: 'right', title: { display: true, text: '访客数', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
+        }
+      }
+    }, 1200, 300);
+
+    var extraStyles = ' h2{color:#1a1a2e;margin:24px 0 8px;font-size:16px;border-bottom:2px solid #1a1a2e;padding-bottom:4px;}';
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + extraStyles + '</style></head><body>' +
+      '<div class="rpt-wrap">' +
+      '<div class="rpt-title">📊 年度汇总报告</div>' +
+      '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
+      '<div class="rpt-meta"><span>数据跨度：' + (monthKeys2[0] || '—') + ' 至 ' + (monthKeys2[monthKeys2.length - 1] || '—') + '</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
+      '<div class="kpi-grid">' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalAll.inquiries + '</div><div class="kpi-lbl">累计询盘</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalAll.visitors.toLocaleString() + '</div><div class="kpi-lbl">累计访客</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">¥' + totalAll.adSpend.toFixed(0) + '</div><div class="kpi-lbl">累计广告花费</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">¥' + totalAll.deals.toLocaleString() + '</div><div class="kpi-lbl">累计成交金额</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + pct(totalAll.inquiries, totalAll.visitors) + '</div><div class="kpi-lbl">综合询盘转化率</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalAll.leads + '</div><div class="kpi-lbl">累计线索</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + (totalAll.leads > 0 ? '¥' + (totalAll.adSpend / totalAll.leads).toFixed(2) : '—') + '</div><div class="kpi-lbl">综合单线索成本</div></div>' +
+      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">综合ROI</div></div>' +
+      '</div>' +
+      chartSection('月度询盘 & 成交金额趋势', chart5Img) +
+      chartSection('月度广告花费 · 访客 · 线索趋势', chart6Img) +
+      '<h2>▌ 年度对比（按年汇总）</h2>' +
+      '<table><thead><tr><th>年份</th><th>展现量</th><th>访客数</th><th>询盘数</th><th>接待数</th><th>询盘转化率</th><th>接待转化率</th><th>广告花费</th><th>线索</th><th>单线索成本</th><th>成交金额</th><th>成交笔数</th><th>ROI</th><th>询盘年同比</th></tr></thead><tbody>' + yearRows + '</tbody></table>' +
+      '<h2>▌ 月度明细（所有月份）</h2>' +
+      '<table><thead><tr><th>月份</th><th>访客数</th><th>询盘数</th><th>接待数</th><th>询盘转化率</th><th>广告花费</th><th>线索</th><th>成交金额</th><th>ROI</th><th>月询盘环比</th></tr></thead><tbody>' + monthRows + '</tbody></table>' +
+      '</div></body></html>';
+
     var tempContainer = document.createElement('div');
-    tempContainer.innerHTML = htmlContent;
-    tempContainer.style.position = 'absolute';
-    tempContainer.style.left = '-10000px';
-    tempContainer.style.background = 'white';
-    tempContainer.style.padding = '20px';
-    tempContainer.style.color = '#000';
+    tempContainer.innerHTML = html;
+    tempContainer.style.cssText = 'position:absolute;left:-10000px;background:white;padding:20px;color:#000;width:1300px;';
     document.body.appendChild(tempContainer);
-    if (!assertPdfLibs()) {
-      document.body.removeChild(tempContainer);
-      return;
-    }
     try {
-      var canvas = await html2canvas(tempContainer, html2canvasPdfOptions());
-      var pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+      var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
+      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
       var imgData = canvas.toDataURL('image/png');
-      var imgWidth = 210;
+      var imgWidth = 297;
       var imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight);
       pdf.save('年度汇总_' + new Date().getFullYear() + '.pdf');
-      alert('年度汇总已下载');
+      alert('✅ 年度汇总已下载（含趋势图 + 年对比 + 月明细）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
