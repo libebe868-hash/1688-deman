@@ -555,31 +555,33 @@
     }
     if (chartId === 'funnelChart') {
       var fCvs = document.getElementById('funnelChart');
-      // 销毁旧 Chart 实例（若存在）
       var oldChart = Chart.getChart(fCvs);
       if (oldChart) oldChart.destroy();
       var fCtx = fCvs.getContext('2d');
       var fW = fCvs.offsetWidth || fCvs.parentElement.offsetWidth || 360;
-      var fH = fCvs.height || 300;
-      fCvs.width = fW;
+      // 每层高度足够放两行文字，留出层间箭头空间
+      var rows     = 4;
+      var rowH     = 68; // 固定每层68px
+      var arrowH   = 18; // 层间箭头区
+      var fH       = rows * rowH + (rows - 1) * arrowH;
+      fCvs.width  = fW;
       fCvs.height = fH;
       fCtx.clearRect(0, 0, fW, fH);
       var fLabels  = ['总展现', '访客', '询盘', '接待'];
       var fValues  = [total.totalExp, total.visitors, total.inquiries, total.reception];
       var fColors  = ['#00ffff', '#c026d3', '#f59e0b', '#00ff88'];
       var maxVal   = fValues[0] || 1;
-      var rows     = fLabels.length;
-      var rowH     = fH / rows;
-      var maxTopW  = fW * 0.88;
-      var minBotW  = fW * 0.16;
+      var maxTopW  = fW * 0.86;
+      var minBotW  = fW * 0.14;
       for (var fi = 0; fi < rows; fi++) {
-        var ratio    = fValues[fi] / maxVal;
-        var topW     = fi === 0 ? maxTopW : (fValues[fi - 1] / maxVal) * (maxTopW - minBotW) + minBotW;
-        var botW     = ratio * (maxTopW - minBotW) + minBotW;
-        var topX     = (fW - topW) / 2;
-        var botX     = (fW - botW) / 2;
-        var y0       = fi * rowH + 2;
-        var y1       = y0 + rowH - 4;
+        var y0   = fi * (rowH + arrowH);
+        var y1   = y0 + rowH;
+        var midY = (y0 + y1) / 2;
+        var topW = fi === 0 ? maxTopW : (fValues[fi - 1] / maxVal) * (maxTopW - minBotW) + minBotW;
+        var botW = (fValues[fi] / maxVal) * (maxTopW - minBotW) + minBotW;
+        var topX = (fW - topW) / 2;
+        var botX = (fW - botW) / 2;
+        // 梯形
         fCtx.beginPath();
         fCtx.moveTo(topX, y0);
         fCtx.lineTo(topX + topW, y0);
@@ -588,25 +590,34 @@
         fCtx.closePath();
         var grad = fCtx.createLinearGradient(0, y0, 0, y1);
         grad.addColorStop(0, fColors[fi]);
-        grad.addColorStop(1, fColors[fi] + '88');
+        grad.addColorStop(1, fColors[fi] + 'aa');
         fCtx.fillStyle = grad;
         fCtx.fill();
-        // 标签
-        fCtx.fillStyle = '#1a1a2e';
+        // 标签（左，上行）
+        fCtx.fillStyle = '#0a0a1e';
         fCtx.font = 'bold 13px Microsoft YaHei,Arial';
         fCtx.textAlign = 'left';
-        fCtx.fillText(fLabels[fi], topX + 8, y0 + rowH * 0.5 + 5);
-        // 数值
-        fCtx.textAlign = 'right';
-        fCtx.fillStyle = '#1a1a2e';
-        fCtx.fillText(fValues[fi].toLocaleString(), topX + topW - 8, y0 + rowH * 0.5 + 5);
-        // 转化率
+        fCtx.fillText(fLabels[fi], topX + 10, midY - 4);
+        // 数值（左，下行）
+        fCtx.font = '12px Microsoft YaHei,Arial';
+        fCtx.fillText(fValues[fi].toLocaleString(), topX + 10, midY + 13);
+        // 转化率（右侧居中）
         if (fi > 0 && fValues[fi - 1] > 0) {
           var cvRate = ((fValues[fi] / fValues[fi - 1]) * 100).toFixed(1) + '%';
-          fCtx.fillStyle = '#555';
+          fCtx.fillStyle = '#0a0a1e';
+          fCtx.font = 'bold 13px Microsoft YaHei,Arial';
+          fCtx.textAlign = 'right';
+          fCtx.fillText(cvRate, topX + topW - 10, midY + 4);
+        }
+        // 层间箭头区（当前层底部 ~ 下一层顶部之间）
+        if (fi < rows - 1) {
+          var nextVal = fValues[fi + 1];
+          var arrRate = fValues[fi] > 0 ? ((nextVal / fValues[fi]) * 100).toFixed(1) + '%' : '';
+          var arrY = y1 + arrowH / 2 + 4;
+          fCtx.fillStyle = 'rgba(200,200,220,0.9)';
           fCtx.font = '11px Microsoft YaHei,Arial';
           fCtx.textAlign = 'center';
-          fCtx.fillText('↓ ' + cvRate, fW / 2, y0 - 1);
+          fCtx.fillText('▼ 转化率 ' + arrRate, fW / 2, arrY);
         }
       }
       return;
@@ -1242,20 +1253,6 @@
       '<div class="rpt-title">📈 月度汇总报告</div>' +
       '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
       '<div class="rpt-meta"><span>统计月份：' + (monthKeys[0] || '') + ' 至 ' + (monthKeys[monthKeys.length-1] || '') + '（共 ' + monthKeys.length + ' 个月）</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
-      '<div class="kpi-grid">' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.totalExp.toLocaleString() + '</div><div class="kpi-lbl">累计展现量</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.visitors.toLocaleString() + '</div><div class="kpi-lbl">累计访客数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.inquiries + '</div><div class="kpi-lbl">累计询盘数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.reception + '</div><div class="kpi-lbl">累计接待数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + mConvRate + '</div><div class="kpi-lbl">询盘转化率</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + mRecRate + '</div><div class="kpi-lbl">接待转化率</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totals.leads + '</div><div class="kpi-lbl">累计线索数</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + (totals.leads > 0 ? '¥' + (totals.adSpend / totals.leads).toFixed(2) : '—') + '</div><div class="kpi-lbl">单线索成本</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">¥' + totals.adSpend.toFixed(0) + '</div><div class="kpi-lbl">累计广告花费</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">¥' + totals.deals.toLocaleString() + '</div><div class="kpi-lbl">累计成交金额</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + totalRoi + '</div><div class="kpi-lbl">综合ROI</div></div>' +
-      '<div class="kpi-box"><div class="kpi-val">' + monthKeys.length + ' 个月</div><div class="kpi-lbl">统计月数</div></div>' +
-      '</div>' +
       chartSection('月度询盘 · 接待 · 访客趋势', chart3Img) +
       chartSection('月度广告花费（柱）& ROI趋势（折线）', chart4Img) +
       '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ 月度明细数据</div>' +
