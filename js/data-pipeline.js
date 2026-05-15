@@ -48,8 +48,21 @@
   }
 
   function matchField(norm) {
+    // 第一轮：精确匹配（防止「广告展现」因含「展现」被误判为 totalExp）
     for (var field in FIELD_ALIASES) {
-      if (cellMatchesField(norm, field)) return field;
+      var list = FIELD_ALIASES[field];
+      for (var i = 0; i < list.length; i++) {
+        var a = normalizeHeader(list[i]);
+        if (a && norm === a) return field;
+      }
+    }
+    // 第二轮：模糊子串匹配（仅精确未命中时才退而求其次）
+    for (var field2 in FIELD_ALIASES) {
+      var list2 = FIELD_ALIASES[field2];
+      for (var j = 0; j < list2.length; j++) {
+        var b = normalizeHeader(list2[j]);
+        if (b.length >= 2 && norm.indexOf(b) !== -1) return field2;
+      }
     }
     return null;
   }

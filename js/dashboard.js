@@ -197,8 +197,8 @@
     var loadingEl = document.getElementById('loading');
     loadingEl.style.display = 'block';
     loadingEl.innerHTML = '加载数据中...';
-    document.getElementById('stats').style.display = 'none';
-    document.getElementById('charts').style.display = 'none';
+    var statsEl = document.getElementById('stats'); if (statsEl) statsEl.style.display = 'none';
+    var chartsEl = document.getElementById('charts'); if (chartsEl) chartsEl.style.display = 'none';
     lastParseWarnings = [];
 
     try {

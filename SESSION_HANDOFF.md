@@ -64,32 +64,9 @@ To resume this session in ANY AI tool:
 - js\data-pipeline.js
 - api\sample-dashboard.json
 - config.json
-- README.md
-- js\dashboard.js
-- index.html
-
-## Recent Changes
-**Branch:** main
-
-**Modified:**
-- README.md
-- index.html
-
-**Untracked:**
-- .cursorrules
-- .github/copilot-instructions.md
-- .gitignore
-- AGENTS.md
-- CLAUDE.md
-- GEMINI.md
-- api/sample-dashboard.json
-- config.json
-- js/dashboard.js
-- js/data-pipeline.js
-- workers/xlsx-worker.js
-
 
 ## Recent Commits
+- `1f095d8` 优化完善：修复字段映射、增加null安全、嵌入图表报告、增加样本数据 (Robertonicker)
 - `40f538e` 优化数据看板：增加周月年汇总下载、新增4个核心指标、接待趋势图表、支持PDF导出和A4打印 (libebe868-hash)
 
 
@@ -121,4 +98,4 @@ workers/
 - [ ] Recover any missed decisions before session ends
 
 ---
-Generated: 2026-05-15T02:15:18.781Z
+Generated: 2026-05-15T02:40:02.490Z
