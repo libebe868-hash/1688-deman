@@ -137,16 +137,13 @@
   }
 
   function pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight) {
-    var pageH = 210; // A4 横向(landscape) 页高为 210mm，宽为 297mm
-    var heightLeft = imgHeight;
-    var position = 0;
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageH;
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageH;
+    // A4 横向: 宽297mm 高210mm
+    var pageH = 210;
+    var totalPages = Math.ceil(imgHeight / pageH);
+    for (var i = 0; i < totalPages; i++) {
+      if (i > 0) pdf.addPage();
+      // 将整张图片向上偏移，使当前页区域对齐到页面顶部
+      pdf.addImage(imgData, 'PNG', 0, -(i * pageH), imgWidth, imgHeight);
     }
   }
 
@@ -473,23 +470,61 @@
       return;
     }
     if (chartId === 'funnelChart') {
-      new Chart(document.getElementById('funnelChart'), {
-        type: 'bar',
-        data: {
-          labels: ['总展现', '访客', '询盘', '接待'],
-          datasets: [
-            {
-              data: [total.totalExp, total.visitors, total.inquiries, total.reception],
-              backgroundColor: ['#00ffff', '#ff00ff', '#ffff00', '#00ff88']
-            }
-          ]
-        },
-        options: {
-          indexAxis: 'y',
-          plugins: { legend: { display: false }, datalabels: { display: false } },
-          scales: { x: { display: false } }
+      var fCvs = document.getElementById('funnelChart');
+      // 销毁旧 Chart 实例（若存在）
+      var oldChart = Chart.getChart(fCvs);
+      if (oldChart) oldChart.destroy();
+      var fCtx = fCvs.getContext('2d');
+      var fW = fCvs.offsetWidth || fCvs.parentElement.offsetWidth || 360;
+      var fH = fCvs.height || 300;
+      fCvs.width = fW;
+      fCvs.height = fH;
+      fCtx.clearRect(0, 0, fW, fH);
+      var fLabels  = ['总展现', '访客', '询盘', '接待'];
+      var fValues  = [total.totalExp, total.visitors, total.inquiries, total.reception];
+      var fColors  = ['#00ffff', '#c026d3', '#f59e0b', '#00ff88'];
+      var maxVal   = fValues[0] || 1;
+      var rows     = fLabels.length;
+      var rowH     = fH / rows;
+      var maxTopW  = fW * 0.88;
+      var minBotW  = fW * 0.16;
+      for (var fi = 0; fi < rows; fi++) {
+        var ratio    = fValues[fi] / maxVal;
+        var topW     = fi === 0 ? maxTopW : (fValues[fi - 1] / maxVal) * (maxTopW - minBotW) + minBotW;
+        var botW     = ratio * (maxTopW - minBotW) + minBotW;
+        var topX     = (fW - topW) / 2;
+        var botX     = (fW - botW) / 2;
+        var y0       = fi * rowH + 2;
+        var y1       = y0 + rowH - 4;
+        fCtx.beginPath();
+        fCtx.moveTo(topX, y0);
+        fCtx.lineTo(topX + topW, y0);
+        fCtx.lineTo(botX + botW, y1);
+        fCtx.lineTo(botX, y1);
+        fCtx.closePath();
+        var grad = fCtx.createLinearGradient(0, y0, 0, y1);
+        grad.addColorStop(0, fColors[fi]);
+        grad.addColorStop(1, fColors[fi] + '88');
+        fCtx.fillStyle = grad;
+        fCtx.fill();
+        // 标签
+        fCtx.fillStyle = '#1a1a2e';
+        fCtx.font = 'bold 13px Microsoft YaHei,Arial';
+        fCtx.textAlign = 'left';
+        fCtx.fillText(fLabels[fi], topX + 8, y0 + rowH * 0.5 + 5);
+        // 数值
+        fCtx.textAlign = 'right';
+        fCtx.fillStyle = '#1a1a2e';
+        fCtx.fillText(fValues[fi].toLocaleString(), topX + topW - 8, y0 + rowH * 0.5 + 5);
+        // 转化率
+        if (fi > 0 && fValues[fi - 1] > 0) {
+          var cvRate = ((fValues[fi] / fValues[fi - 1]) * 100).toFixed(1) + '%';
+          fCtx.fillStyle = '#555';
+          fCtx.font = '11px Microsoft YaHei,Arial';
+          fCtx.textAlign = 'center';
+          fCtx.fillText('↓ ' + cvRate, fW / 2, y0 - 1);
         }
-      });
+      }
       return;
     }
     if (chartId === 'monthlyChart') {
@@ -1175,11 +1210,52 @@
   }
 
   async function downloadAnnualSummary() {
+    // 收集所有年份供用户选择
+    var availableYears = [];
+    allData.forEach(function (d) {
+      var y = String(d.date.getFullYear());
+      if (availableYears.indexOf(y) === -1) availableYears.push(y);
+    });
+    availableYears.sort();
+    var selectedYear = null;
+    if (availableYears.length > 1) {
+      var optHtml = availableYears.map(function(y){ return '<option value="'+y+'">'+y+'年</option>'; }).join('');
+      var sel = document.createElement('select');
+      sel.innerHTML = '<option value="">-- 全部年份 --</option>' + optHtml;
+      sel.style.cssText = 'font-size:16px;padding:6px 12px;border-radius:6px;border:1px solid #ccc;margin:10px 0;width:100%;';
+      var dlg = document.createElement('div');
+      dlg.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+      var box = document.createElement('div');
+      box.style.cssText = 'background:#fff;padding:30px 36px;border-radius:12px;min-width:280px;box-shadow:0 8px 32px rgba(0,0,0,.25);font-family:Microsoft YaHei,Arial;';
+      box.innerHTML = '<div style="font-size:18px;font-weight:bold;color:#1a1a2e;margin-bottom:14px;">📅 选择年度</div>';
+      box.appendChild(sel);
+      var btnRow = document.createElement('div');
+      btnRow.style.cssText = 'display:flex;gap:12px;margin-top:16px;';
+      var btnOk = document.createElement('button');
+      btnOk.textContent = '确认下载';
+      btnOk.style.cssText = 'flex:1;padding:10px;background:#1a1a2e;color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
+      var btnCancel = document.createElement('button');
+      btnCancel.textContent = '取消';
+      btnCancel.style.cssText = 'flex:1;padding:10px;background:#eee;color:#333;border:none;border-radius:8px;font-size:15px;cursor:pointer;';
+      btnRow.appendChild(btnOk);
+      btnRow.appendChild(btnCancel);
+      box.appendChild(btnRow);
+      dlg.appendChild(box);
+      document.body.appendChild(dlg);
+      selectedYear = await new Promise(function(resolve) {
+        btnOk.onclick = function() { document.body.removeChild(dlg); resolve(sel.value || null); };
+        btnCancel.onclick = function() { document.body.removeChild(dlg); resolve(false); };
+      });
+      if (selectedYear === false) return; // 用户取消
+    } else if (availableYears.length === 1) {
+      selectedYear = availableYears[0];
+    }
+
     // 按年分组
     var years = {};
-    allData.forEach(function (d) {
-      var y = d.date.getFullYear();
-      if (!years[y]) years[y] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0, dealCount: 0 };
+    allData.filter(function(d){
+      return !selectedYear || String(d.date.getFullYear()) === selectedYear;
+    }).forEach(function (d) {inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0, adExp: 0, dealCount: 0 };
       var yr = years[y];
       yr.inquiries += d.inquiries;
       yr.reception += d.reception;
@@ -1196,7 +1272,9 @@
 
     // 同时按月汇总（用于月明细表）
     var monthMap = {};
-    allData.forEach(function (d) {
+    allData.filter(function(d){
+      return !selectedYear || String(d.date.getFullYear()) === selectedYear;
+    }).forEach(function (d) {
       var mk = format(d.date, 'yyyy-MM');
       if (!monthMap[mk]) monthMap[mk] = { inquiries: 0, reception: 0, visitors: 0, adSpend: 0, leads: 0, deals: 0, totalExp: 0 };
       monthMap[mk].inquiries += d.inquiries;
@@ -1256,7 +1334,9 @@
         '</tr>';
     });
 
-    var totalAll = allData.reduce(function (a, d) {
+    var totalAll = allData.filter(function(d){
+      return !selectedYear || String(d.date.getFullYear()) === selectedYear;
+    }).reduce(function (a, d) {
       return { inquiries: a.inquiries + d.inquiries, adSpend: a.adSpend + d.adSpend, deals: a.deals + d.deals, visitors: a.visitors + d.visitors, leads: a.leads + d.leads };
     }, { inquiries: 0, adSpend: 0, deals: 0, visitors: 0, leads: 0 });
     var totalRoi = totalAll.adSpend > 0 ? ((totalAll.deals / totalAll.adSpend) * 100).toFixed(1) + '%' : '—';
@@ -1327,7 +1407,7 @@
     var extraStyles = ' h2{color:#1a1a2e;margin:24px 0 8px;font-size:16px;border-bottom:2px solid #1a1a2e;padding-bottom:4px;}';
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + extraStyles + '</style></head><body>' +
       '<div class="rpt-wrap">' +
-      '<div class="rpt-title">📊 年度汇总报告</div>' +
+      '<div class="rpt-title">📊 年度汇总报告' + (selectedYear ? '（' + selectedYear + '年）' : '') + '</div>' +
       '<div class="rpt-subtitle">汉鸿店铺 · 阿里巴巴数据战情室</div>' +
       '<div class="rpt-meta"><span>数据跨度：' + (monthKeys2[0] || '—') + ' 至 ' + (monthKeys2[monthKeys2.length - 1] || '—') + '</span><span>生成时间：' + new Date().toLocaleString('zh-CN') + '</span></div>' +
       '<div class="kpi-grid">' +
@@ -1359,7 +1439,7 @@
       var imgWidth = 297;
       var imgHeight = (canvas.height * imgWidth) / canvas.width;
       pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight);
-      pdf.save('年度汇总_' + new Date().getFullYear() + '.pdf');
+      pdf.save('年度汇总_' + (selectedYear || new Date().getFullYear()) + '.pdf');
       alert('✅ 年度汇总已下载（含趋势图 + 年对比 + 月明细）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
