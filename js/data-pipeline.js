@@ -47,11 +47,34 @@
     return false;
   }
 
-  function matchField(norm) {
-    for (var field in FIELD_ALIASES) {
-      if (cellMatchesField(norm, field)) return field;
+  function scoreFieldMatch(norm, field) {
+    var list = FIELD_ALIASES[field];
+    for (var i = 0; i < list.length; i++) {
+      var a = normalizeHeader(list[i]);
+      if (!a) continue;
+      if (norm === a) return 100;
     }
-    return null;
+    var maxScore = 0;
+    for (var j = 0; j < list.length; j++) {
+      var b = normalizeHeader(list[j]);
+      if (b.length >= 2 && norm.indexOf(b) !== -1) {
+        maxScore = Math.max(maxScore, b.length);
+      }
+    }
+    return maxScore > 0 ? maxScore : 0;
+  }
+
+  function matchField(norm) {
+    var bestField = null;
+    var bestScore = 0;
+    for (var field in FIELD_ALIASES) {
+      var score = scoreFieldMatch(norm, field);
+      if (score > bestScore) {
+        bestScore = score;
+        bestField = field;
+      }
+    }
+    return bestField;
   }
 
   function scoreHeaderRow(row) {
