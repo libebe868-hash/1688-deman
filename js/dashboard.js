@@ -1033,32 +1033,6 @@
       }
     }, 1120, 310);
 
-    // ── 生成折线图2：广告花费 vs 成交金额 ──
-    var chart2Img = await renderChartToBase64({
-      type: 'line',
-      data: {
-        labels: wkLabels,
-        datasets: [
-          { label: '广告花费(¥)', data: weekKeys.map(function(w){ return weeks[w].adSpend; }),
-            borderColor: CHART_PALETTE.orange.line, backgroundColor: CHART_PALETTE.orange.fill,
-            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.orange.line, fill: true, tension: 0.35, yAxisID: 'y' },
-          { label: '成交金额(¥)', data: weekKeys.map(function(w){ return weeks[w].deals; }),
-            borderColor: CHART_PALETTE.pink.line, backgroundColor: CHART_PALETTE.pink.fill,
-            borderWidth: 2.5, pointRadius: 5, pointBackgroundColor: CHART_PALETTE.pink.line, fill: false, tension: 0.35, yAxisID: 'y1' }
-        ]
-      },
-      options: {
-        plugins: {
-          legend: { labels: { color: '#1a1a2e', font: { size: 13 } } },
-          datalabels: { display: false }
-        },
-        scales: {
-          y:  { position: 'left',  title: { display: true, text: '广告花费(¥)', color: '#555' }, grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#555' } },
-          y1: { position: 'right', title: { display: true, text: '成交金额(¥)', color: '#555' }, grid: { drawOnChartArea: false }, ticks: { color: '#555' } }
-        }
-      }
-    }, 1120, 310);
-
     var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + styles + '</style></head><body>' +
       '<div class="rpt-wrap">' +
       '<div class="rpt-title">📊 周度汇总报告</div>' +
@@ -1079,7 +1053,6 @@
       '<div class="kpi-box"><div class="kpi-val">' + weekKeys.length + ' 周</div><div class="kpi-lbl">统计周数</div></div>' +
       '</div>' +
       chartSection('周询盘 · 接待 · 访客趋势', chart1Img) +
-      chartSection('周广告花费 vs 成交金额', chart2Img) +
       '<div style="margin:20px 0 6px;font-size:15px;font-weight:bold;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:4px;">▌ 周度明细数据</div>' +
       '<table><thead><tr>' + thRow + '</tr></thead><tbody>' + rows + '</tbody></table>' +
       '</div></body></html>';
@@ -1090,10 +1063,13 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
-      await pdfSmartMultipage(pdf, canvas, 297, 210);
+      // 单页自定义高度，彻底不分页不截断
+      var pdfW = 297;
+      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
+      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfW, pdfH);
       pdf.save('周度汇总_' + (currentMonth || '全期') + '.pdf');
-      alert('✅ 周度汇总已下载（含趋势图 + 数据表，共' + pdf.getNumberOfPages() + '页）');
+      alert('✅ 周度汇总已下载（完整单页，无截断）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
@@ -1292,10 +1268,12 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
-      await pdfSmartMultipage(pdf, canvas, 297, 210);
+      var pdfW = 297;
+      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
+      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfW, pdfH);
       pdf.save('月度汇总_' + selectedMonths.join('_') + '.pdf');
-      alert('✅ 月度汇总已下载（' + selectedMonths.length + '个月，共' + pdf.getNumberOfPages() + '页）');
+      alert('✅ 月度汇总已下载（' + selectedMonths.length + '个月，完整单页无截断）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
@@ -1503,11 +1481,12 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var imgData = canvas.toDataURL('image/png');
-      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
-      await pdfSmartMultipage(pdf, canvas, 297, 210);
+      var pdfW = 297;
+      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
+      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfW, pdfH);
       pdf.save('年度汇总_' + selectedYears.join('-') + '.pdf');
-      alert('✅ 年度汇总已下载（' + selectedYears.join('、') + '年，共' + pdf.getNumberOfPages() + '页）');
+      alert('✅ 年度汇总已下载（' + selectedYears.join('、') + '年，完整单页无截断）');
     } catch (err) {
       alert('导出失败：' + (err && err.message ? err.message : String(err)));
     } finally {
