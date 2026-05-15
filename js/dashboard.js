@@ -1006,11 +1006,11 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
       var imgData = canvas.toDataURL('image/png');
-      var imgWidth = 297;
-      var imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight);
+      var pdfW = 297; // A4横向宽度mm
+      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width); // 根据内容计算实际高度
+      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
       pdf.save('周度汇总_' + (currentMonth || '全期') + '.pdf');
       alert('✅ 周度汇总已下载（含趋势图 + 数据表）');
     } catch (err) {
@@ -1195,11 +1195,11 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
       var imgData = canvas.toDataURL('image/png');
-      var imgWidth = 297;
-      var imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight);
+      var pdfW = 297;
+      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
+      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
       pdf.save('月度汇总_' + new Date().getFullYear() + '.pdf');
       alert('✅ 月度汇总已下载（含趋势图 + 数据表）');
     } catch (err) {
@@ -1436,11 +1436,11 @@
     document.body.appendChild(tempContainer);
     try {
       var canvas = await html2canvas(tempContainer, { scale: 1.5, backgroundColor: '#ffffff', logging: false, useCORS: true });
-      var pdf = new jspdf.jsPDF('l', 'mm', 'a4');
       var imgData = canvas.toDataURL('image/png');
-      var imgWidth = 297;
-      var imgHeight = (canvas.height * imgWidth) / canvas.width;
-      pdfAddImageMultipage(pdf, imgData, imgWidth, imgHeight);
+      var pdfW = 297;
+      var pdfH = Math.ceil(canvas.height * pdfW / canvas.width);
+      var pdf = new jspdf.jsPDF({ orientation: 'l', unit: 'mm', format: [pdfW, pdfH] });
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
       pdf.save('年度汇总_' + (selectedYear || new Date().getFullYear()) + '.pdf');
       alert('✅ 年度汇总已下载（含趋势图 + 年对比 + 月明细）');
     } catch (err) {
